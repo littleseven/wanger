@@ -12,21 +12,27 @@ class MainFrame(wx.Frame):
 
     rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
 
-    def __init__(self, parent=None, id=-1, displaySize=(1600, 900), Fun_SwFrame=None):
+    def __init__(self, parent=None, id=-1, displaySize=(1550, 900), Fun_SwFrame=None):
 
-        displaySize = 0.05 * displaySize[0], 0.4 * displaySize[1]
+        displaySize = 0.05 * displaySize[0], 0.5 * displaySize[1]
 
         wx.Frame.__init__(self, parent=None, title=u'', size=displaySize, style=wx.DEFAULT_FRAME_STYLE)
 
         self.fun_swframe = Fun_SwFrame
         toolbar = wx.ToolBar(self, style=wx.TB_TEXT | wx.TB_VERTICAL)
-        toolbar.AddTool(1100, '量化', wx.Bitmap(MainFrame.rel_path + "png/tab_quant.png"))
+        img_quant = wx.Image(MainFrame.rel_path + "png/test.png", "image/png").Scale(55, 55)
+        img_price = wx.Image(MainFrame.rel_path + "png/price.png", "image/png").Scale(55, 55)
+        img_trade = wx.Image(MainFrame.rel_path + "png/trade.png", "image/png").Scale(55, 55)
+        img_config = wx.Image(MainFrame.rel_path + "png/config.png", "image/png").Scale(55, 55)
+
+        toolbar.AddTool(1100, '量化', wx.Bitmap(img_quant, wx.BITMAP_SCREEN_DEPTH))
         toolbar.AddSeparator()
-        toolbar.AddTool(1101, '行情', wx.Bitmap(MainFrame.rel_path + "png/tab_price.png"))
+        toolbar.AddTool(1101, '行情', wx.Bitmap(img_price, wx.BITMAP_SCREEN_DEPTH))
         toolbar.AddSeparator()
-        toolbar.AddTool(1102, '交易', wx.Bitmap(MainFrame.rel_path + "png/tab_trade.png"))
+        toolbar.AddTool(1102, '交易', wx.Bitmap(img_trade, wx.BITMAP_SCREEN_DEPTH))
         toolbar.AddSeparator()
-        toolbar.AddTool(1103, '配置', wx.Bitmap(MainFrame.rel_path + "png/tab_config.png"))
+        toolbar.AddTool(1103, '配置', wx.Bitmap(img_config, wx.BITMAP_SCREEN_DEPTH))
+
         toolbar.Realize()
         toolbar.Bind(wx.EVT_TOOL, self.OnEventTrig)
 
