@@ -80,7 +80,7 @@ class MplTypesDraw():
 
                 graph.annotate(u"{}\n{}".format(key, today.name.strftime("%m.%d")),
                                xy=(x_posit, today[val['xy_y']]),
-                               xycoords='datautil',
+                               xycoords='data',
                                xytext=(val['xytext'][0], val['xytext'][1]),
                                va=val['va'],  # 点在标注下方
                                textcoords='offset points',
@@ -113,7 +113,7 @@ class MplTypesDraw():
                 graph.annotate('获利\n' if is_win else '亏损\n',
                                xy=(end, df_dat['jdval'].asof(kl_index)),
                                xytext=(df_dat['xytext'][0], df_dat['xytext'][1]),
-                               xycoords='datautil',
+                               xycoords='data',
                                va=df_dat['va'],  # 点在标注下方
                                textcoords='offset points',
                                fontsize=df_dat['fontsize'],
