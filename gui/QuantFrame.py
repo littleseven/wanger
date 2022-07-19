@@ -665,12 +665,12 @@ class QuantFrame(wx.Frame):
         if item != 0 and self.pick_graph_last == 0:  # 单图切到多子图
 
             if item <= 4:  # 1-4 属于MPL显示区
-                self.graphs_obj = SubGraphs(self)
+                self.graphs_obj = SubGraphs(self.rightPanel)
             elif item <= 8:  # 5-8 属于WEB显示区
-                self.graphs_obj = WebGraphs(self)
+                self.graphs_obj = WebGraphs(self.rightPanel)
             else:  # 故障保护
                 MessageDialog("一级切换-0错误！")
-                self.graphs_obj = SubGraphs(self)
+                self.graphs_obj = SubGraphs(self.rightPanel)
             self.switch_content_panel(self.QuantPanel, self.graphs_obj.FlexGridSizer, False)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
 
@@ -679,12 +679,12 @@ class QuantFrame(wx.Frame):
             self.switch_content_panel(self.FlexGridSizer, self.QuantPanel, False)
 
         elif item <= 4 and self.pick_graph_last > 4:
-            self.graphs_obj = SubGraphs(self)
+            self.graphs_obj = SubGraphs(self.rightPanel)
             self.switch_content_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
 
         elif item > 4 and self.pick_graph_last <= 4:
-            self.graphs_obj = WebGraphs(self)
+            self.graphs_obj = WebGraphs(self.rightPanel)
             self.switch_content_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
         else:
