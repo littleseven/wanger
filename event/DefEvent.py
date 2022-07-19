@@ -5,7 +5,7 @@ import time
 import datetime
 import pandas as pd
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 from datautil.Baostock import bs_k_data_stock, bs_cash_flow_stock
 from strategy.StrategyGath import Base_Strategy_Group
 from datautil.CsvData import (
@@ -172,7 +172,7 @@ class EventHandle:
         st_period = kwargs["st_period"]
 
         # 加载参数
-        firm_para = Base_File_Oper.load_sys_para("firm_para.json")
+        firm_para = FileUtil.load_sys_para("firm_para.json")
 
         # 更新参数
         firm_para['subplots_dict']['graph_fst']['title'] = st_code + '/' + st_name + '/' + st_period + '/' + st_auth
@@ -194,7 +194,7 @@ class EventHandle:
         st_period = kwargs["st_period"]
 
         # 加载参数
-        group_para = Base_File_Oper.load_sys_para("group_para.json")
+        group_para = FileUtil.load_sys_para("group_para.json")
 
         # 更新参数
         group_para['subplots_dict']['graph_fst']['title'] = st_code + ' ' + st_period + ' ' + st_auth
@@ -214,7 +214,7 @@ class EventHandle:
         stake_value = kwargs["stake_value"]
 
         # 加载参数
-        back_para = Base_File_Oper.load_sys_para("back_para.json")
+        back_para = FileUtil.load_sys_para("back_para.json")
         # 更新回测参数
         back_para['subplots_dict']['graph_sec']['graph_type']['cash_profit']['cash_hold'] = cash_value
         back_para['subplots_dict']['graph_sec']['graph_type']['cash_profit']['slippage'] = slippage_value
@@ -223,7 +223,7 @@ class EventHandle:
         back_para['subplots_dict']['graph_sec']['graph_type']['cash_profit']['stake_size'] = stake_value
         back_para['subplots_dict']['graph_fst']['title'] = st_code + "-回测分析"
         # 保存参数
-        Base_File_Oper.save_sys_para("back_para.json", back_para)
+        FileUtil.save_sys_para("back_para.json", back_para)
         # 返回参数
         return back_para['subplots_dict']
 
@@ -234,7 +234,7 @@ class EventHandle:
         st_auth = kwargs["st_auth"]
         st_period = kwargs["st_period"]
 
-        sub_para = Base_File_Oper.load_sys_para("sub_para.json")
+        sub_para = FileUtil.load_sys_para("sub_para.json")
         sub_para['subplots_dict']['graph_fst']['title'] = st_code + ' ' + st_period + ' ' + st_auth
 
         return sub_para['subplots_dict']

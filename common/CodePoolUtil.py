@@ -2,7 +2,7 @@
 # -*-  encoding: utf-8 -*-
 # author 王二
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 
 
 class CodePoolUtil:
@@ -12,12 +12,12 @@ class CodePoolUtil:
 
     def load_my_pool(self):
         # 加载自选股票池
-        self_pool = Base_File_Oper.load_sys_para("stock_self_pool.json")
+        self_pool = FileUtil.load_sys_para("stock_self_pool.json")
         self.syslog.re_print("从Json文件获取自选股票池成功...\n")
         return self_pool
 
     def save_self_pool(self, total_code):
-        Base_File_Oper.save_sys_para("stock_self_pool.json", total_code)
+        FileUtil.save_sys_para("stock_self_pool.json", total_code)
         self.syslog.re_print("保存自选股票池至Json文件成功...\n")
 
     def load_pool_stock(self):

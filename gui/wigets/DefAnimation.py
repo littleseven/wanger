@@ -8,31 +8,26 @@ import time
 import wx
 
 import matplotlib.animation as animation
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import mplfinance as mpf  # 替换 import mpl_finance as mpf
+import mplfinance as mpf
 
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.figure import Figure
-
-from gui.wigets.DefPanel import BasePanel
-
-# 正常显示画图时出现的中文和负号
+from gui.wigets.BasePanel import BasePanel
 from pylab import mpl
-mpl.rcParams['font.sans-serif']=['SimHei']
+
+mpl.rcParams['font.sans-serif'] = ['SimHei']
 mpl.rcParams['axes.unicode_minus'] = False
 
-class AnimationDialog(wx.Dialog):
 
-    bars_range = 100 # 显示100个bars
+class AnimationDialog(wx.Dialog):
+    bars_range = 100  # 显示100个bars
 
     def __init__(self, parent, title=u"K线自动播放", update_df=[], size=(850, 800)):
         wx.Dialog.__init__(self, parent, -1, title, size=size, style=wx.DEFAULT_FRAME_STYLE)
 
         self.SetBackgroundColour(wx.Colour('#EBEDEB'))
 
-        self.disp_panel = BasePanel(self) # 自定义
+        self.disp_panel = BasePanel(self)  # 自定义
         self.figure = self.disp_panel.figure
         self.ochl = self.disp_panel.ochl
         self.vol = self.disp_panel.vol
@@ -58,7 +53,7 @@ class AnimationDialog(wx.Dialog):
 
         self.SetSizer(self.vbox_sizer)
         self.Layout()
-        #self.vbox_sizer.Fit(self)
+        # self.vbox_sizer.Fit(self)
 
         self.line, = self.ochl.plot([], [], '-', color='#239B3F', lw=1)
 
@@ -83,17 +78,16 @@ class AnimationDialog(wx.Dialog):
         self.thread1.start()
         self.Show()
 
-
     def ev_start_move(self, event):
         self.ani.event_source.start()
         self.pause_flag = False
 
     def ev_pause_move(self, event):
-        self.ani.event_source.stop() # 动画停止
+        self.ani.event_source.stop()  # 动画停止
         self.pause_flag = True
 
     def ev_stop_move(self, event):
-        self.ani.event_source.stop() # 动画停止
+        self.ani.event_source.stop()  # 动画停止
         self.kill_flag = True
 
     def put_data_thread(self, dummy):
@@ -101,7 +95,7 @@ class AnimationDialog(wx.Dialog):
         while True:
             for bar in self.st_dat.itertuples():
                 time.sleep(0.5)
-                while self.pause_flag == True: # 暂停
+                while self.pause_flag == True:  # 暂停
                     time.sleep(0.5)
                 self.animQueue.put(bar)
 
@@ -110,21 +104,20 @@ class AnimationDialog(wx.Dialog):
             break
         print("finish thread!")
 
-
     def init(self):
 
         # 常量
         self.initCount = 0
-        self.pause_flag = True # 初始化时先暂停动画
+        self.pause_flag = True  # 初始化时先暂停动画
 
         self.thisx = []
         self.thisy = []
         self.thisIndex = []
         self.thisOCHLV = pd.DataFrame()
 
-        self.thisx = [i for i in range(0, self.bars_range+1)]
+        self.thisx = [i for i in range(0, self.bars_range + 1)]
         self.thisy = (np.zeros(101, dtype=int) - 1).tolist()
-        self.thisIndex = [id for id, _ in self.st_dat[0:self.bars_range+1].iterrows()]
+        self.thisIndex = [id for id, _ in self.st_dat[0:self.bars_range + 1].iterrows()]
         self.line.set_data([], [])
         # 设置x轴的范围
         self.ochl.set_xlim(min(self.thisx), max(self.thisx))
@@ -144,12 +137,12 @@ class AnimationDialog(wx.Dialog):
                 if self.pause_flag == True:
                     break
 
-                bar = self.animQueue.get() # animation中取动态数据后, 重画图像。
+                bar = self.animQueue.get()  # animation中取动态数据后, 重画图像。
 
                 df_bar = pd.DataFrame({'Close': bar.Close, 'Open': bar.Open,
-                              'High': bar.High,
-                              'Low': bar.Low,
-                              'Volume': bar.Volume}, index = [bar.Index])
+                                       'High': bar.High,
+                                       'Low': bar.Low,
+                                       'Volume': bar.Volume}, index=[bar.Index])
 
                 self.thisOCHLV = self.thisOCHLV.append(df_bar)
 
@@ -176,15 +169,16 @@ class AnimationDialog(wx.Dialog):
 
         if self.initCount > 0:
 
-            self.ochl.set_xlim(min(self.thisx), max(self.thisx)) # 设置x轴的范围
-            self.ochl.set_xticks([i for i in range(min(self.thisx), max(self.thisx) + 1, 20)]) # 更新x轴刻度
+            self.ochl.set_xlim(min(self.thisx), max(self.thisx))  # 设置x轴的范围
+            self.ochl.set_xticks([i for i in range(min(self.thisx), max(self.thisx) + 1, 20)])  # 更新x轴刻度
 
-            self.vol.set_xlim(min(self.thisx), max(self.thisx)) # 设置x轴的范围
-            self.vol.set_xticks([i for i in range(min(self.thisx), max(self.thisx) + 1, 20)]) # 更新x轴刻度
+            self.vol.set_xlim(min(self.thisx), max(self.thisx))  # 设置x轴的范围
+            self.vol.set_xticks([i for i in range(min(self.thisx), max(self.thisx) + 1, 20)])  # 更新x轴刻度
 
             self.vol.set_xticklabels(
                 [self.thisIndex[i].strftime('%Y-%m-%d %H:%M') for i in range(min(self.thisx),
-                                                    max(self.thisx) + 1, 20)], rotation=0) # 设置刻度标签
+                                                                             max(self.thisx) + 1, 20)],
+                rotation=0)  # 设置刻度标签
 
             for label in self.ochl.xaxis.get_ticklabels():  # X-轴每个ticker标签隐藏
                 label.set_visible(False)
@@ -211,4 +205,3 @@ class AnimationDialog(wx.Dialog):
             self.line.set_data(self.thisx, self.thisy)
 
         return self.line
-

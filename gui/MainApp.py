@@ -48,14 +48,12 @@ class GuiManager():
     def return_frame(self, type):
         if type == 0:  # 主界面
             return BenchFrame(parent=None, id=type,
-                             displaySize=self.displaySize, switchFrame=self.fun_swframe)
-            # return BenchFrame(parent=None, id=type,
-            #                   displaySize=self.displaySize, switchFrame=self.fun_swframe)
+                              displaySize=self.displaySize, switchFrame=self.fun_swframe)
         elif type == 1:  # 量化分析界面
-            # return QuantFrame(parent=None, id=type,
+            return QuantFrame(parent=None, id=type,
+                              displaySize=self.displaySize, Fun_SwFrame=self.fun_swframe)
+            # return UserFrame(parent=None, id=type,
             #                  displaySize=self.displaySize, Fun_SwFrame=self.fun_swframe)
-            return UserFrame(parent=None, id=type,
-                             displaySize=self.displaySize, Fun_SwFrame=self.fun_swframe)
         elif type == 2:  # 数据管理界面
             return DataFrame(parent=None, id=type,
                              displaySize=wx.DisplaySize(), Fun_SwFrame=self.fun_swframe)

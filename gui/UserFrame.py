@@ -15,10 +15,8 @@ import time
 import webbrowser
 from importlib import reload
 
-from gui.wigets.DefPanel import (
-    SubGraphs,
-    Sys_Panel
-)
+from gui.wigets.SysPanel import Sys_Panel
+from gui.wigets.SubGraph import SubGraphs
 
 from gui.wigets.DefEchart import (
     WebGraphs
@@ -68,7 +66,7 @@ from event.DefEvent import (
 from strategy.StrategyGath import Base_Strategy_Group
 from strategy.PattenGath import Base_Patten_Group
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 from common.CodeTableUtil import CodeTableUtil
 from common.CodePoolUtil import CodePoolUtil
 from common.LogUtil import SysLogIf, PatLogIf
@@ -124,8 +122,8 @@ class UserFrame(wx.Frame):
         #self.vbox_sizer_a.Add(self._init_grid_pl(), proportion=5, flag=wx.EXPAND | wx.BOTTOM, border=5)
 
         # 加载配置文件
-        firm_para = Base_File_Oper.load_sys_para("firm_para.json")
-        back_para = Base_File_Oper.load_sys_para("back_para.json")
+        firm_para = FileUtil.load_sys_para("firm_para.json")
+        back_para = FileUtil.load_sys_para("back_para.json")
 
         # 创建显示区面板
         self.DispPanel = Sys_Panel(self, **firm_para['layout_dict']) # 自定义
@@ -133,7 +131,7 @@ class UserFrame(wx.Frame):
         self.DispPanelA = self.DispPanel
 
         # 此处涉及windows和macos的区别
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        sys_para = FileUtil.load_sys_para("sys_para.json")
         if sys_para["operate_sys"] == "windows":
             try:
                 # WIN环境下兼容WEB配置
@@ -225,7 +223,7 @@ class UserFrame(wx.Frame):
         self.ParaNoteb.AddPage(self.ParaPaPanel, "形态选股")
 
         # 此处涉及windows和macos的区别
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        sys_para = FileUtil.load_sys_para("sys_para.json")
         if sys_para["operate_sys"] == "macos":
             self.ParaNoteb.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._ev_change_noteb)
         else:
@@ -241,7 +239,7 @@ class UserFrame(wx.Frame):
         self.statusBar.SetStatusWidths([-2, -1, -1])
         t = time.localtime(time.time())
         self.SetStatusText("公众号：程序员道哥带你用Python量化交易", 0)
-        self.SetStatusText("当前版本：%s" % Base_File_Oper.load_sys_para("sys_para.json")["__version__"], 1)
+        self.SetStatusText("当前版本：%s" % FileUtil.load_sys_para("sys_para.json")["__version__"], 1)
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
 
@@ -296,7 +294,7 @@ class UserFrame(wx.Frame):
 
     def _ev_change_noteb(self, event):
 
-        #print(self.ParaNoteb.GetSelection())
+        #print(self.paramNotebook.GetSelection())
 
         old = event.GetOldSelection()
         new = event.GetSelection()
@@ -1384,9 +1382,9 @@ class UserFrame(wx.Frame):
         self.patlog.re_print("\n形态分析明细查看ConfigFiles路径的双底形态分析结果.csv")
         proc_dialog.close_bar()
 
-        Base_File_Oper.save_patten_analysis(df_search, f"{datetime.datetime.now().strftime('%y-%m-%d')}-双底形态分析结果")
+        FileUtil.save_patten_analysis(df_search, f"{datetime.datetime.now().strftime('%y-%m-%d')}-双底形态分析结果")
 
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        sys_para = FileUtil.load_sys_para("sys_para.json")
         auto_send_email('主人！你的双底形态分析报告来啦', "\n形态分析明细查看ConfigFiles路径的双底形态分析结果.csv",
                         f"{datetime.datetime.now().strftime('%y-%m-%d')}-双底形态分析结果.csv",
                         self.patlog, **sys_para["mailbox"])

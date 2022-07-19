@@ -21,7 +21,7 @@ from gui.wigets.DefDialog import MessageDialog, ViewGripDiag, ProgressDialog, Do
 from strategy.PattenGath import Base_Patten_Group
 from strategy.IndicateGath import Base_Indicate_Group
 from common.LogUtil import PatLogIf
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 from common.RemoteInfo import auto_send_email
 
 q_codes = queue.Queue(5000)
@@ -327,7 +327,7 @@ class DataFrame(wx.Frame):
         self.statusBar.SetStatusWidths([-2, -1, -1])
         t = time.localtime(time.time())
         self.SetStatusText("公众号：程序员道哥带你用Python量化交易", 0)
-        self.SetStatusText("当前版本：%s" % Base_File_Oper.load_sys_para("sys_para.json")["__version__"], 1)
+        self.SetStatusText("当前版本：%s" % FileUtil.load_sys_para("sys_para.json")["__version__"], 1)
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
         self.Center()
 
@@ -636,9 +636,9 @@ class DataFrame(wx.Frame):
             else:
                 pass
 
-            Base_File_Oper.save_patten_analysis(df_search, f"{datetime.now().strftime('%y-%m-%d')}-双底形态分析结果-高速版")
+            FileUtil.save_patten_analysis(df_search, f"{datetime.now().strftime('%y-%m-%d')}-双底形态分析结果-高速版")
 
-            sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+            sys_para = FileUtil.load_sys_para("sys_para.json")
 
             auto_send_email('主人！你的双底形态分析报告来啦', "\n形态分析明细查看ConfigFiles路径的双底形态分析结果-高速版.csv",
                             f"{datetime.now().strftime('%y-%m-%d')}-双底形态分析结果-高速版.csv",
@@ -694,7 +694,7 @@ class DataFrame(wx.Frame):
                 self.patlog.re_print("\nRPS排名分析完成！排名明细查看ConfigFiles路径的RPS—Top10分析结果-高速版.csv")
                 proc_dialog.close_bar()
 
-                Base_File_Oper.save_patten_analysis(df_return, f"{datetime.now().strftime('%y-%m-%d')}-RPS—Top10分析结果-高速版")
+                FileUtil.save_patten_analysis(df_return, f"{datetime.now().strftime('%y-%m-%d')}-RPS—Top10分析结果-高速版")
 
                 if (rps_para[u"输入跟踪排名的代码"].find('.') != -1) and track_name != "":  # 输入代码正常
 

@@ -12,7 +12,7 @@ from pyecharts.charts import Grid, Line, Bar, EffectScatter, Kline  # newest 1.7
 from pyecharts import options as opts
 from pyecharts.charts import TreeMap
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 
 load_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/datafiles/'
 
@@ -118,7 +118,7 @@ class WebGraphs(wx.Panel):
         self.DispPanel2 = WebPanel(parent)  # 自定义
         self.DispPanel3 = WebPanel(parent)  # 自定义
 
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        sys_para = FileUtil.load_sys_para("sys_para.json")
 
         # 调整尺寸-size(x,y)数值 体现每个panel的大小
         self.DispPanel0.bind_browser(wx.html2.WebView.New(self.DispPanel0, -1, size=(sys_para["multi-panels"]["web_size_x"],

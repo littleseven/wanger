@@ -18,60 +18,30 @@ from importlib import reload
 from wx.lib.agw import aui
 
 from gui.MainPanel import MainPanel
-from gui.wigets.DefPanel import (
-    SubGraphs,
-    Sys_Panel
-)
+from gui.wigets.SysPanel import Sys_Panel
+from gui.wigets.SubGraph import SubGraphs
+from gui.wigets.DefEchart import WebGraphs
+from gui.wigets.DefTreelist import CollegeTreeListCtrl
+from gui.wigets.DefGrid import GridTable
+from gui.wigets.DefEchart import Pyechart_Drive
 
-from gui.wigets.DefEchart import (
-    WebGraphs
-)
-
-from gui.wigets.DefTreelist import (
-    CollegeTreeListCtrl
-)
-
-from gui.wigets.DefGrid import (
-    GridTable
-)
-
-from gui.wigets.DefEchart import (
-    Pyechart_Drive
-)
-
-from gui.wigets.DefDialog import (
-    UserDialog, MessageDialog, ImportFileDiag, GroupPctDiag, GroupTrendDiag, ProgressDialog, ChoiceDialog, BrowserF10,
-    WebDialog, DouBottomDialog
-)
-
+from gui.wigets.DefDialog import UserDialog, MessageDialog, ImportFileDiag, GroupPctDiag, GroupTrendDiag, \
+    ProgressDialog, ChoiceDialog, BrowserF10, WebDialog, DouBottomDialog
 from gui.wigets.DefAnimation import AnimationDialog
 
-from datautil.Tushare import (
-    Tspro_Backend,
-    Tsorg_Backend
-)
-
-from datautil.FromSql import (
-    readFundDatFromSql
-)
-
+from datautil.Tushare import Tspro_Backend, Tsorg_Backend
+from datautil.FromSql import readFundDatFromSql
 from datautil.CrawerDaily import CrawerDailyBackend
 from datautil.CrawerNorth import CrawerNorthBackend
 from datautil.EastmUpLimit import UpLimitBackend
-
-from datautil.CsvData import (
-    CsvBackend
-)
+from datautil.CsvData import CsvBackend
 
 # 分离控件事件中调用的子事件
-from event.DefEvent import (
-    EventHandle
-)
-
+from event.DefEvent import EventHandle
 from strategy.StrategyGath import Base_Strategy_Group
 from strategy.PattenGath import Base_Patten_Group
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 from common.CodeTableUtil import CodeTableUtil
 from common.CodePoolUtil import CodePoolUtil
 from common.LogUtil import SysLogIf, PatLogIf
@@ -84,25 +54,14 @@ plt.rcParams['figure.dpi'] = 50
 
 class QuantFrame(wx.Frame):
     rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
+    contentWidth = 0
+    contentHeight = 0
 
     def __init__(self, parent=None, id=-1, displaySize=(1600, 900), Fun_SwFrame=None):
-
-        # M1 与 M2 横向布局时宽度分割
-        self.M1_width = int(displaySize[0] * 0.1)
-        self.M2_width = int(displaySize[0] * 0.9)
-        # M1 纵向100%
-        self.M1_length = int(displaySize[1])
-
-        # M1中S1 S2 S3 纵向布局高度分割
-        self.M1S1_length = int(self.M1_length * 0.2)
-        self.M1S2_length = int(self.M1_length * 0.2)
-        self.M1S3_length = int(self.M1_length * 0.6)
-
-        # 默认样式wx.DEFAULT_FRAME_STYLE含
-        # wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN
         wx.Frame.__init__(self, parent=None, title=u'王二量化实验室', size=displaySize,
                           style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
-
+        self.checkEnv()
+        self.setFrameSize(displaySize)
         self.SetIcon(wx.Icon(self.rel_path + "png/we.ico"))
         self.SetMinSize((640, 480))
 
@@ -113,13 +72,9 @@ class QuantFrame(wx.Frame):
         self._mgr = aui.AuiManager()
         self.mainPanel = mainPanel = MainPanel(self)
         self._mgr.SetManagedWindow(self.mainPanel)
-        #mainPanel.SetSize(size=displaySize)
-        #mainPanel.SetMinSize((640, 480))
 
-        self.leftPanel = leftPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL|wx.CLIP_CHILDREN)
-        self.rightPanel = rightPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL|wx.CLIP_CHILDREN)
-
-
+        self.leftPanel = leftPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
+        self.rightPanel = rightPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
         # 多子图布局对象
         self.FlexGridSizer = None
@@ -145,56 +100,45 @@ class QuantFrame(wx.Frame):
         self.vbox_sizer_left.Fit(self)
         leftPanel.SetSizer(self.vbox_sizer_left)
         # 加载配置文件
-        firm_para = Base_File_Oper.load_sys_para("firm_para.json")
-        back_para = Base_File_Oper.load_sys_para("back_para.json")
+        firm_para = FileUtil.load_sys_para("firm_para.json")
+        back_para = FileUtil.load_sys_para("back_para.json")
 
         # 创建显示区面板
         self.QuantPanel = Sys_Panel(rightPanel, **firm_para['layout_dict'])  # 自定义
         self.BackMplPanel = Sys_Panel(rightPanel, **back_para['layout_dict'])  # 自定义
-        self.DispPanelA = self.QuantPanel
-
-        # 此处涉及windows和macos的区别
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
-        if sys_para["operate_sys"] == "windows":
-            try:
-                # WIN环境下兼容WEB配置
-                import winreg
-                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                     r"SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
-                                     0, winreg.KEY_ALL_ACCESS)  # 打开所有权限
-                # 设置注册表python.exe 值为 11000(IE11)
-                winreg.SetValueEx(key, 'python.exe', 0, winreg.REG_DWORD, 0x00002af8)
-            except:
-                # 设置出现错误
-                MessageDialog("WIN环境配置注册表中浏览器兼容显示出错,检查是否安装第三方库【winreg】")
-
-        # 创建wxGrid表格对象
-        self._init_grid_pk(rightPanel)
-        # 创建text日志对象
-        self._init_patten_log(rightPanel)
+        self.tempStockPanel = self.QuantPanel
 
         # 第二层布局
         self.vbox_sizer_right = wx.BoxSizer(wx.VERTICAL)  # 纵向box
-        self.vbox_sizer_right.Add(self._init_para_notebook(rightPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM,
-                                  border=5)  # 添加行情参数布局
-        self.vbox_sizer_right.Add(self.patten_log_tx, proportion=10, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        self.vbox_sizer_right.SetMinSize((800, 800))
+        self.vbox_sizer_right.Add(self._init_param_notebook(rightPanel), proportion=1, flag=wx.EXPAND | wx.TOP, border=5)  # 添加行情参数布局
+        # 创建text日志对象
+        self.vbox_sizer_right.Add(self._init_patten_log(rightPanel), proportion=10,
+                                  flag=wx.EXPAND | wx.BOTTOM, border=5)
+        self._init_grid_pk(rightPanel)
+        # self.vbox_sizer_right.Add(self._init_grid_pk(rightPanel), proportion=10,
+        #                           flag=wx.EXPAND | wx.BOTTOM, border=5)
         self.vbox_sizer_right.Fit(self)
         rightPanel.SetSizer(self.vbox_sizer_right)
 
         # 第一层布局
-        self.HBoxPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
-        # self.HBoxPanelSizer.Add(self.vbox_sizer_left, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
-        # self.HBoxPanelSizer.Add(self.vbox_sizer_right, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
-        self.HBoxPanelSizer.Fit(self.mainPanel)
-        self.mainPanel.SetSizer(self.HBoxPanelSizer)  # 使布局有效
-        # 初始化全部页面
-        self.switch_main_panel(self.patten_log_tx, self.grid_pk, False)
-        self.switch_main_panel(self.grid_pk, self.BackMplPanel, False)
-        self.switch_main_panel(self.BackMplPanel, self.QuantPanel, True)  # 等类型替换
+        self.mainPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
+        # self.mainPanelSizer.Add(self.vbox_sizer_left, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
+        # self.mainPanelSizer.Add(self.vbox_sizer_right, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
 
+        # 初始化全部页面
+        # self._init_patten_log(rightPanel)
+        self.switch_content_panel(self.patten_log_sizer, self.grid_pick_box, False)
+        self.switch_content_panel(self.grid_pick_box, self.BackMplPanel, False)
+        self.switch_content_panel(self.BackMplPanel, self.QuantPanel, True)  # 等类型替换
+        self.switch_content_panel(self.QuantPanel, self.patten_log_sizer, False)
+
+
+        self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效
+        self.mainPanelSizer.Layout()
         ################################### 辅助配置 ###################################
         self.syslog = SysLogIf(self.sys_log_tx)
-        self.patlog = PatLogIf(self.patten_log_tx)
+        self.patlog = PatLogIf(self.patten_log_text)
 
         # self.timer = wx.Timer(self)  # 创建定时器
         # self.Bind(wx.EVT_TIMER, self.ev_int_timer, self.timer)  # 绑定一个定时器事件
@@ -205,7 +149,7 @@ class QuantFrame(wx.Frame):
 
         ################################### 加载自选股票池 ###################################
         self.code_pool = CodePoolUtil(self.syslog)
-        self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+        self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
 
         self._init_status_bar()
         self._init_menu_bar()
@@ -215,16 +159,15 @@ class QuantFrame(wx.Frame):
         self._mgr.AddPane(toolbar, aui.AuiPaneInfo().Name('').Caption('工具条').ToolbarPane().Right().Floatable(True))
         self._mgr.AddPane(self.leftPanel,
                           aui.AuiPaneInfo().
-                          Left().Layer(2).BestSize((300, 700)).
-                          MinSize((300, 400)).
-                          Floatable(True).FloatingSize((300, 700)).
-                          Caption("wxPython").
+                          Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).
+                          MinSize((self.leftWidth, self.leftHeight)).
+                          Floatable(True).FloatingSize((self.leftWidth, self.leftHeight)).
+                          # Caption("wxPython").
                           CloseButton(False).
-                          Name("DemoTree"))
-        self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("Notebook").Resizable(True))
+                          Name("LeftPanel"))
+        self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
         self._mgr.Update()
         self._mgr.SetAGWFlags(self._mgr.GetAGWFlags() ^ aui.AUI_MGR_TRANSPARENT_DRAG)
-
 
     def _init_treelist_ctrl(self, subpanel):
 
@@ -235,43 +178,41 @@ class QuantFrame(wx.Frame):
         return self.treeListCtrl
 
     def _init_nav_notebook(self, parent):
+        # 左侧参数区面板
+        self.navNoteBook = wx.Notebook(parent)
 
+        self.navNoteBook.AddPage(self._init_treelist_ctrl(self.navNoteBook), "策略导航")
+        self.navNoteBook.AddPage(self._init_grid_stock_pool(self.navNoteBook), "股票池索引")
+
+        return self.navNoteBook
+
+    def _init_param_notebook(self, parent):
         # 创建参数区面板
-        self.NavNoteb = wx.Notebook(parent)
-
-        self.NavNoteb.AddPage(self._init_treelist_ctrl(self.NavNoteb), "策略导航")
-        self.NavNoteb.AddPage(self._init_grid_pl(self.NavNoteb), "股票池索引")
-
-        return self.NavNoteb
-
-    def _init_para_notebook(self, parent):
-
-        # 创建参数区面板
-        self.ParaNoteb = wx.Notebook(parent)
-        self.ParaStPanel = wx.Panel(self.ParaNoteb, -1)  # 行情
-        self.ParaBtPanel = wx.Panel(self.ParaNoteb, -1)  # 回测 back test
-        self.ParaPtPanel = wx.Panel(self.ParaNoteb, -1)  # 条件选股 pick stock
-        self.ParaPaPanel = wx.Panel(self.ParaNoteb, -1)  # 形态选股 patten
+        self.paramNotebook = wx.Notebook(parent)
+        self.stockPanel = wx.Panel(self.paramNotebook, -1)  # 行情
+        self.backTestPanel = wx.Panel(self.paramNotebook, -1)  # 回测 back test
+        self.pickPanel = wx.Panel(self.paramNotebook, -1)  # 条件选股 pick stock
+        self.patternPanel = wx.Panel(self.paramNotebook, -1)  # 形态选股 pattern
 
         # 第二层布局
-        self.ParaStPanel.SetSizer(self.add_stock_para_lay(self.ParaStPanel))
-        self.ParaBtPanel.SetSizer(self.add_backt_para_lay(self.ParaBtPanel))
-        self.ParaPtPanel.SetSizer(self.add_pick_para_lay(self.ParaPtPanel))
-        self.ParaPaPanel.SetSizer(self.add_patten_para_lay(self.ParaPaPanel))
+        self.stockPanel.SetSizer(self.add_stock_para_lay(self.stockPanel))
+        self.backTestPanel.SetSizer(self.add_backt_para_lay(self.backTestPanel))
+        self.pickPanel.SetSizer(self.add_pick_para_lay(self.pickPanel))
+        self.patternPanel.SetSizer(self.add_patten_para_lay(self.patternPanel))
 
-        self.ParaNoteb.AddPage(self.ParaStPanel, "行情参数")
-        self.ParaNoteb.AddPage(self.ParaBtPanel, "回测参数")
-        self.ParaNoteb.AddPage(self.ParaPtPanel, "条件选股")
-        self.ParaNoteb.AddPage(self.ParaPaPanel, "形态选股")
+        self.paramNotebook.AddPage(self.stockPanel, "行情参数")
+        self.paramNotebook.AddPage(self.backTestPanel, "回测参数")
+        self.paramNotebook.AddPage(self.pickPanel, "条件选股")
+        self.paramNotebook.AddPage(self.patternPanel, "形态选股")
 
         # 此处涉及windows和macos的区别
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        sys_para = FileUtil.load_sys_para("sys_para.json")
         if sys_para["operate_sys"] == "macos":
-            self.ParaNoteb.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._ev_change_noteb)
+            self.paramNotebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self._ev_change_notebook)
         else:
-            self.ParaNoteb.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._ev_change_noteb)
+            self.paramNotebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self._ev_change_notebook)
 
-        return self.ParaNoteb
+        return self.paramNotebook
 
     def _create_toolbar(self, parent):
         toolbar = aui.AuiToolBar(parent, -1, wx.DefaultPosition, wx.DefaultSize,
@@ -302,7 +243,7 @@ class QuantFrame(wx.Frame):
         self.statusBar.SetStatusWidths([-2, -1, -1])
         t = time.localtime(time.time())
         self.SetStatusText("公众号：程序员道哥带你用Python量化交易", 0)
-        self.SetStatusText("当前版本：%s" % Base_File_Oper.load_sys_para("sys_para.json")["__version__"], 1)
+        self.SetStatusText("当前版本：%s" % FileUtil.load_sys_para("sys_para.json")["__version__"], 1)
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
 
@@ -339,29 +280,26 @@ class QuantFrame(wx.Frame):
         self.SetMenuBar(menuBar)
         """
 
-    def switch_main_panel(self, org_panel=None, new_panel=None, inplace=True):
+    def switch_content_panel(self, org_panel=None, new_panel=None, inplace=True):
 
         if id(org_panel) != id(new_panel):
 
             self.vbox_sizer_right.Hide(org_panel)
 
-            if inplace == True:
+            if inplace:
                 self.vbox_sizer_right.Replace(org_panel, new_panel)  # 等类型可替换
             else:
                 # 先删除后添加
                 self.vbox_sizer_right.Detach(org_panel)
                 self.vbox_sizer_right.Add(new_panel, proportion=10, flag=wx.EXPAND | wx.BOTTOM, border=5)
-
             self.vbox_sizer_right.Show(new_panel)
-            self.mainPanel.SetSizer(self.HBoxPanelSizer)
-            self.HBoxPanelSizer.Layout()
 
-    def _ev_change_noteb(self, event):
-        # print(self.ParaNoteb.GetSelection())
+    def _ev_change_notebook(self, event):
+        # print(self.paramNotebook.GetSelection())
         old = event.GetOldSelection()
         new = event.GetSelection()
 
-        sw_obj = [[self.QuantPanel, self.FlexGridSizer], self.BackMplPanel, self.grid_pk, self.patten_log_tx]
+        sw_obj = [[self.QuantPanel, self.FlexGridSizer], self.BackMplPanel, self.grid_pick_box, self.patten_log_sizer]
 
         if (old >= len(sw_obj)) or (new >= len(sw_obj)):
             raise ValueError(u"切换面板号出错！")
@@ -383,9 +321,10 @@ class QuantFrame(wx.Frame):
 
         ex_flag = False
 
-        if type(sw_obj[old]) == type(sw_obj[new]): ex_flag = True  # 等类型可替换
+        if type(sw_obj[old]) == type(sw_obj[new]):
+            ex_flag = True  # 等类型可替换
 
-        self.switch_main_panel(org_panel, new_panel, ex_flag)
+        self.switch_content_panel(org_panel, new_panel, ex_flag)
 
     def add_stock_para_lay(self, sub_panel):
 
@@ -679,32 +618,35 @@ class QuantFrame(wx.Frame):
 
     def _init_grid_pk(self, parent):
         # 初始化选股表格
-        self.grid_pk = GridTable(parent=parent)
-        self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._ev_cell_lclick_pkcode, self.grid_pk)
-        self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self._ev_label_lclick_pkcode, self.grid_pk)
+        self.grid_pick_box = wx.BoxSizer(wx.VERTICAL)
+        self.grid_pick = GridTable(parent=parent)
+        self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._ev_cell_lclick_pkcode, self.grid_pick)
+        self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self._ev_label_lclick_pkcode, self.grid_pick)
 
         self.df_use = pd.DataFrame()
         self.filte_result = pd.DataFrame()
-        return self.grid_pk
+        self.grid_pick_box.Add(self.grid_pick, proportion= 0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        return self.grid_pick_box
 
     def _init_patten_log(self, parent):
-
         # 创建形态选股日志
-        self.patten_log_tx = wx.TextCtrl(parent=parent, style=wx.TE_MULTILINE, size=(250, 300))
+        self.patten_log_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.patten_log_text = wx.TextCtrl(parent=parent, style=wx.TE_MULTILINE, size=(self.rightWidth, 25))
+        self.patten_log_text.AppendText("hello world")
+        self.patten_log_sizer.Add(self.patten_log_text, proportion=1, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
+        return self.patten_log_sizer
 
-        return self.patten_log_tx
-
-    def _init_grid_pl(self, subpanel):
+    def _init_grid_stock_pool(self, parent):
         # 初始化股票池表格
-        self.grid_pl = GridTable(parent=subpanel, nrow=0, ncol=2)
-        self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._ev_click_plcode, self.grid_pl)
-        return self.grid_pl
+        self.grid_stock_pool = GridTable(parent=parent, nrow=0, ncol=2)
+        self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._ev_click_plcode, self.grid_stock_pool)
+        return self.grid_stock_pool
 
     def _init_listbox_mult(self, parent):
 
         self.mult_analyse_box = wx.StaticBox(parent, -1, u'组合分析股票池')
         self.mult_analyse_sizer = wx.StaticBoxSizer(self.mult_analyse_box, wx.VERTICAL)
-        self.listBox = wx.ListBox(parent, -1, size=(self.M1_width, self.M1S2_length), choices=[], style=wx.LB_EXTENDED)
+        self.listBox = wx.ListBox(parent, -1, size=(self.leftWidth, self.M1S2_length), choices=[], style=wx.LB_EXTENDED)
         self.listBox.Bind(wx.EVT_LISTBOX_DCLICK, self._ev_list_select)
         self.mult_analyse_sizer.Add(self.listBox, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
 
@@ -715,13 +657,13 @@ class QuantFrame(wx.Frame):
         # 创建并初始化系统日志框
         self.sys_log_box = wx.StaticBox(parent, -1, u'系统日志')
         self.sys_log_sizer = wx.StaticBoxSizer(self.sys_log_box, wx.VERTICAL)
-        self.sys_log_tx = wx.TextCtrl(parent, style=wx.TE_MULTILINE, size=(self.M1_width, self.M1S1_length))
+        self.sys_log_tx = wx.TextCtrl(parent, style=wx.TE_MULTILINE, size=(self.leftWidth, self.M1S1_length))
         self.sys_log_sizer.Add(self.sys_log_tx, proportion=1, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
         return self.sys_log_sizer
 
     def refresh_grid(self, df, back_col=""):
-        self.grid_pk.SetTable(df, self.tran_col)
-        self.grid_pk.SetSelectCol(back_col)
+        self.grid_pick.SetTable(df, self.tran_col)
+        self.grid_pick.SetSelectCol(back_col)
 
     def _ev_select_graph(self, event):
 
@@ -737,44 +679,44 @@ class QuantFrame(wx.Frame):
             else:  # 故障保护
                 MessageDialog("一级切换-0错误！")
                 self.graphs_obj = SubGraphs(self)
-            self.switch_main_panel(self.QuantPanel, self.graphs_obj.FlexGridSizer, False)
+            self.switch_content_panel(self.QuantPanel, self.graphs_obj.FlexGridSizer, False)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
 
         elif item == 0 and self.pick_graph_last != 0:  # 多子图切到单图
             # print(self.vbox_sizer_right.GetItem(self.QuantPanel))
-            self.switch_main_panel(self.FlexGridSizer, self.QuantPanel, False)
+            self.switch_content_panel(self.FlexGridSizer, self.QuantPanel, False)
 
         elif item <= 4 and self.pick_graph_last > 4:
             self.graphs_obj = SubGraphs(self)
-            self.switch_main_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
+            self.switch_content_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
 
         elif item > 4 and self.pick_graph_last <= 4:
             self.graphs_obj = WebGraphs(self)
-            self.switch_main_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
+            self.switch_content_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
         else:
             pass
 
         # 显示区二级切换
         if item == 1 or item == 5:
-            self.DispPanelA = self.graphs_obj.DispPanel0
+            self.tempStockPanel = self.graphs_obj.DispPanel0
             # self.ochl = self.DispPanel0.ochl
             # self.vol = self.DispPanel0.vol
         elif item == 2 or item == 6:
-            self.DispPanelA = self.graphs_obj.DispPanel1
+            self.tempStockPanel = self.graphs_obj.DispPanel1
             # self.ochl = self.DispPanel1.ochl
             # self.vol = self.DispPanel1.vol
         elif item == 3 or item == 7:
-            self.DispPanelA = self.graphs_obj.DispPanel2
+            self.tempStockPanel = self.graphs_obj.DispPanel2
             # self.ochl = self.DispPanel2.ochl
             # self.vol = self.DispPanel2.vol
         elif item == 4 or item == 8:
-            self.DispPanelA = self.graphs_obj.DispPanel3
+            self.tempStockPanel = self.graphs_obj.DispPanel3
             # self.ochl = self.DispPanel3.ochl
             # self.vol = self.DispPanel3.vol
         else:
-            self.DispPanelA = self.QuantPanel
+            self.tempStockPanel = self.QuantPanel
 
         self.pick_graph_last = item
 
@@ -986,7 +928,7 @@ class QuantFrame(wx.Frame):
             self.code_pool.update_increase_st(st_name_code_dict)
         else:
             pass
-        self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+        self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
         # self.df_use.to_csv('table-stock.csv', columns=self.df_use.columns, index=True, encoding='GB18030')
 
     def _ev_mark_self(self, event):
@@ -1004,17 +946,17 @@ class QuantFrame(wx.Frame):
                     new_code = number + "." + symbol
                     n_list = self.df_use[self.df_use["股票代码"] == new_code].index.tolist()
                     if n_list != []:
-                        self.grid_pk.SetCellBackgroundColour(n_list[0], 0, wx.YELLOW)
-                        self.grid_pk.SetCellBackgroundColour(n_list[0], 1, wx.YELLOW)
+                        self.grid_pick.SetCellBackgroundColour(n_list[0], 0, wx.YELLOW)
+                        self.grid_pick.SetCellBackgroundColour(n_list[0], 1, wx.YELLOW)
             else:
                 for code in list(self.code_pool.load_pool_stock().values()):  # 加载自选股票池
                     symbol, number = code.upper().split('.')
                     new_code = number + "." + symbol
                     n_list = self.df_use[self.df_use["股票代码"] == new_code].index.tolist()
                     if n_list != []:
-                        self.grid_pk.SetCellBackgroundColour(n_list[0], 0, wx.WHITE)
-                        self.grid_pk.SetCellBackgroundColour(n_list[0], 1, wx.WHITE)
-            self.grid_pk.Refresh()
+                        self.grid_pick.SetCellBackgroundColour(n_list[0], 0, wx.WHITE)
+                        self.grid_pick.SetCellBackgroundColour(n_list[0], 1, wx.WHITE)
+            self.grid_pick.Refresh()
 
     def _ev_trade_log(self, event):
 
@@ -1054,8 +996,8 @@ class QuantFrame(wx.Frame):
                                 else:
                                     # 第三步:绘制可视化图形
                                     if self.pick_graph_cbox.GetSelection() != 0:
-                                        self.DispPanelA.clear_subgraph()  # 必须清理图形才能显示下一幅图
-                                        self.DispPanelA.draw_subgraph(self.stock_dat, st_code, st_period + st_auth)
+                                        self.tempStockPanel.clear_subgraph()  # 必须清理图形才能显示下一幅图
+                                        self.tempStockPanel.draw_subgraph(self.stock_dat, st_code, st_period + st_auth)
                                     else:
                                         # 配置图表属性
                                         firm_para = self.call_method(self.event_task['cfg_firm_para'],
@@ -1065,9 +1007,9 @@ class QuantFrame(wx.Frame):
                                                                      st_auth=st_auth,
                                                                      st_label=st_label)
 
-                                        self.DispPanelA.firm_graph_run(self.stock_dat, **firm_para)
+                                        self.tempStockPanel.firm_graph_run(self.stock_dat, **firm_para)
 
-                                    self.DispPanelA.update_subgraph()  # 必须刷新才能显示下一幅图
+                                    self.tempStockPanel.update_subgraph()  # 必须刷新才能显示下一幅图
                             else:
                                 self.function = getattr(Base_Strategy_Group, s_key.get('define', ''))
                         else:
@@ -1147,8 +1089,8 @@ class QuantFrame(wx.Frame):
 
                 # 第三步:绘制可视化图形
                 if self.pick_graph_cbox.GetSelection() != 0:
-                    self.DispPanelA.clear_subgraph()  # 必须清理图形才能显示下一幅图
-                    self.DispPanelA.draw_subgraph(self.stock_dat, st_code, st_period + st_auth)
+                    self.tempStockPanel.clear_subgraph()  # 必须清理图形才能显示下一幅图
+                    self.tempStockPanel.draw_subgraph(self.stock_dat, st_code, st_period + st_auth)
 
                 else:
                     # 配置图表属性
@@ -1158,16 +1100,16 @@ class QuantFrame(wx.Frame):
                                                  st_period=st_period,
                                                  st_auth=st_auth)
 
-                    self.DispPanelA.firm_graph_run(self.stock_dat, **firm_para)
+                    self.tempStockPanel.firm_graph_run(self.stock_dat, **firm_para)
 
-                self.DispPanelA.update_subgraph()  # 必须刷新才能显示下一幅图
+                self.tempStockPanel.update_subgraph()  # 必须刷新才能显示下一幅图
 
         elif select_msg == u"加入组合分析池":
             self._add_analyse_list(st_code + "|" + st_name)
 
         elif select_msg == u"从股票池中剔除":
             self.code_pool.delete_one_st(st_name)
-            self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+            self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
 
         elif select_msg == u"查看F10资料":
             dialog = BrowserF10(self, u"个股F10资料", st_code)
@@ -1214,8 +1156,8 @@ class QuantFrame(wx.Frame):
 
                     # 第三步:绘制可视化图形
                     if self.pick_graph_cbox.GetSelection() != 0:
-                        self.DispPanelA.clear_subgraph()  # 必须清理图形才能显示下一幅图
-                        self.DispPanelA.draw_subgraph(self.stock_dat, "csv导入" + st_code, st_name)
+                        self.tempStockPanel.clear_subgraph()  # 必须清理图形才能显示下一幅图
+                        self.tempStockPanel.draw_subgraph(self.stock_dat, "csv导入" + st_code, st_name)
                     else:
                         # 配置图表属性
                         firm_para = self.call_method(self.event_task['cfg_firm_para'],
@@ -1223,8 +1165,8 @@ class QuantFrame(wx.Frame):
                                                      st_name=st_name,
                                                      st_period=st_period,
                                                      st_auth="不复权")
-                        self.DispPanelA.firm_graph_run(self.stock_dat, **firm_para)
-                    self.DispPanelA.update_subgraph()  # 必须刷新才能显示下一幅图
+                        self.tempStockPanel.firm_graph_run(self.stock_dat, **firm_para)
+                    self.tempStockPanel.update_subgraph()  # 必须刷新才能显示下一幅图
         else:
             pass
 
@@ -1239,15 +1181,15 @@ class QuantFrame(wx.Frame):
     def _ev_click_plcode(self, event):  # 点击股票池股票代码
 
         # 收集股票池中名称和代码
-        st_code = self.grid_pl.GetCellValue(event.GetRow(), 1)
-        st_name = self.grid_pl.GetCellValue(event.GetRow(), 0)
+        st_code = self.grid_stock_pool.GetCellValue(event.GetRow(), 1)
+        st_name = self.grid_stock_pool.GetCellValue(event.GetRow(), 0)
 
         self.handle_active_code(st_code, st_name)
 
     def _ev_label_lclick_pkcode(self, event):
 
         # 收集表格中的列名
-        col_label = self.grid_pk.GetColLabelValue(event.GetCol())
+        col_label = self.grid_pick.GetColLabelValue(event.GetCol())
 
         if col_label == "所属行业" and self.src_dat_cmbo.GetStringSelection() == "离线财务报告":
 
@@ -1278,18 +1220,18 @@ class QuantFrame(wx.Frame):
                     if MessageDialog(text + "\n添加股票到自选股票池？") == "点击Yes":
                         # 自选股票池 更新股票
                         self.code_pool.update_increase_st(updat_dict)
-                        self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+                        self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
 
     def _ev_cell_lclick_pkcode(self, event):  # 点击选股表中股票代码
 
         # 收集表格中的列名
-        col_label = self.grid_pk.GetColLabelValue(event.GetCol())
+        col_label = self.grid_pick.GetColLabelValue(event.GetCol())
 
         if col_label == "股票代码":
             # 收集表格中的单元格
 
             try:
-                st_code = self.grid_pk.GetCellValue(event.GetRow(), event.GetCol())
+                st_code = self.grid_pick.GetCellValue(event.GetRow(), event.GetCol())
                 st_name = self.code_table.get_name(st_code)
 
                 text = self.call_method(self.event_task['get_cash_flow'], st_code=self.code_table.conv_code(st_code))
@@ -1299,14 +1241,14 @@ class QuantFrame(wx.Frame):
                     # self._add_analyse_list(self.code_table.conv_code(st_code) + "|" + st_name)
                     # 自选股票池 更新股票
                     self.code_pool.update_increase_st({st_name: self.code_table.conv_code(st_code)})
-                    self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+                    self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
             except:
                 MessageDialog("股票代码不在存储表中！检查是否为新股/退市等情况！")
 
         elif col_label == "股票名称":
             # 收集表格中的单元格
             try:
-                st_name = self.grid_pk.GetCellValue(event.GetRow(), event.GetCol())
+                st_name = self.grid_pick.GetCellValue(event.GetRow(), event.GetCol())
                 st_code = self.code_table.get_code(st_name)
 
                 text = self.call_method(self.event_task['get_cash_flow'], st_code=self.code_table.conv_code(st_code))
@@ -1316,7 +1258,7 @@ class QuantFrame(wx.Frame):
                     # self._add_analyse_list(self.code_table.conv_code(st_code) + "|" + st_name)
                     # 自选股票池 更新股票
                     self.code_pool.update_increase_st({st_name: self.code_table.conv_code(st_code)})
-                    self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+                    self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
             except:
                 MessageDialog("股票名称不在存储表中！检查是否为新股/退市等情况！")
 
@@ -1452,9 +1394,9 @@ class QuantFrame(wx.Frame):
         self.patlog.re_print("\n形态分析明细查看ConfigFiles路径的双底形态分析结果.csv")
         proc_dialog.close_bar()
 
-        Base_File_Oper.save_patten_analysis(df_search, f"{datetime.datetime.now().strftime('%y-%m-%d')}-双底形态分析结果")
+        FileUtil.save_patten_analysis(df_search, f"{datetime.datetime.now().strftime('%y-%m-%d')}-双底形态分析结果")
 
-        sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        sys_para = FileUtil.load_sys_para("sys_para.json")
         auto_send_email('主人！你的双底形态分析报告来啦', "\n形态分析明细查看ConfigFiles路径的双底形态分析结果.csv",
                         f"{datetime.datetime.now().strftime('%y-%m-%d')}-双底形态分析结果.csv",
                         self.patlog, **sys_para["mailbox"])
@@ -1494,7 +1436,7 @@ class QuantFrame(wx.Frame):
             print(add_code)
             if add_code:
                 self.code_pool.update_increase_st(add_code)
-                self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+                self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
             else:
                 MessageDialog("文件内容为空！\n")
 
@@ -1508,7 +1450,7 @@ class QuantFrame(wx.Frame):
             add_code = self.call_method(self.event_task['get_csvst_pool'], get_path=get_path)
             if add_code:
                 self.code_pool.update_replace_st(add_code)
-                self.grid_pl.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
+                self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
             else:
                 MessageDialog("文件内容为空！\n")
 
@@ -1527,3 +1469,34 @@ class QuantFrame(wx.Frame):
             print("功能预留-后期实现！")
         else:
             pass
+
+    def checkEnv(self):
+        # 此处涉及windows和macos的区别
+        sys_para = FileUtil.load_sys_para("sys_para.json")
+        if sys_para["operate_sys"] == "windows":
+            try:
+                # WIN环境下兼容WEB配置
+                import winreg
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                     r"SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
+                                     0, winreg.KEY_ALL_ACCESS)  # 打开所有权限
+                # 设置注册表python.exe 值为 11000(IE11)
+                winreg.SetValueEx(key, 'python.exe', 0, winreg.REG_DWORD, 0x00002af8)
+            except:
+                # 设置出现错误
+                MessageDialog("WIN环境配置注册表中浏览器兼容显示出错,检查是否安装第三方库【winreg】")
+
+    def setFrameSize(self, displaySize):
+        self.contentWidth = displaySize[0]
+        self.contentHeight = displaySize[1]
+
+        # M1 与 M2 横向布局时宽度分割
+        self.leftWidth = int(self.contentWidth * 0.2)
+        self.rightWidth = int(self.contentWidth * 0.8)
+        # M1 纵向100%
+        self.leftHeight = self.contentHeight
+
+        # M1中S1 S2 S3 纵向布局高度分割
+        self.M1S1_length = int(self.leftHeight * 0.2)
+        self.M1S2_length = int(self.leftHeight * 0.2)
+        self.M1S3_length = int(self.leftHeight * 0.6)

@@ -7,17 +7,17 @@ import pandas as pd
 import sqlite3
 import tushare as ts
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 
-pro = ts.pro_api(Base_File_Oper.read_tushare_token())  # 初始化pro接口
+pro = ts.pro_api(FileUtil.read_tushare_token())  # 初始化pro接口
 
 def basic_code_list(fields_cont = ['ts_code', 'symbol', 'name']):
     # 查询当前所有正常上市交易的股票列表
     try:
         data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
-        Base_File_Oper.save_tushare_basic(data)
+        FileUtil.save_tushare_basic(data)
     except:
-        data = Base_File_Oper.load_tushare_basic()
+        data = FileUtil.load_tushare_basic()
 
     return data.loc[:, fields_cont]
 
@@ -29,7 +29,7 @@ class DataBase_Sqlite(object):
 
     def get_codes(self):
         # 获取股票代码列表
-        dict_basic = Base_File_Oper.load_sys_para("stock_self_pool.json")
+        dict_basic = FileUtil.load_sys_para("stock_self_pool.json")
         return dict_basic['股票'].values()
 
     def update_table(self):

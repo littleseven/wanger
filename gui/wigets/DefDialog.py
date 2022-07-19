@@ -9,8 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from common.SysFile import Base_File_Oper
-from gui.wigets.DefPanel import GroupPanel
+from common.FileUtil import FileUtil
+from gui.wigets.GroupPanel import GroupPanel
 
 
 def MessageDialog(info):
@@ -133,7 +133,7 @@ class UserDialog(wx.Dialog):  # user-defined
 
     def disp_loginfo(self):
         self.log_tx_input.Clear()
-        self.log_tx_input.AppendText(Base_File_Oper.read_log_trade())
+        self.log_tx_input.AppendText(FileUtil.read_log_trade())
 
 class ProgressDialog():
 

@@ -8,7 +8,7 @@ import wx.grid
 import wx.html2
 import time
 
-from common.SysFile import Base_File_Oper
+from common.FileUtil import FileUtil
 from gui.wigets.DefDialog import MessageDialog
 
 
@@ -30,9 +30,9 @@ class ConfFrame(wx.Frame):
         self._init_status_bar()
 
         # 加载配置文件
-        self.firm_para = Base_File_Oper.load_sys_para("firm_para.json")
-        self.back_para = Base_File_Oper.load_sys_para("back_para.json")
-        self.sys_para = Base_File_Oper.load_sys_para("sys_para.json")
+        self.firm_para = FileUtil.load_sys_para("firm_para.json")
+        self.back_para = FileUtil.load_sys_para("back_para.json")
+        self.sys_para = FileUtil.load_sys_para("sys_para.json")
 
         # 创建系统参数配置面板
         self.SysPanel = wx.Panel(self, -1)
@@ -176,7 +176,7 @@ class ConfFrame(wx.Frame):
         self.statusBar.SetStatusWidths([-2, -1, -1])
         t = time.localtime(time.time())
         self.SetStatusText("公众号：程序员道哥带你用Python量化交易", 0)
-        self.SetStatusText("当前版本：%s" % Base_File_Oper.load_sys_para("sys_para.json")["__version__"], 1)
+        self.SetStatusText("当前版本：%s" % FileUtil.load_sys_para("sys_para.json")["__version__"], 1)
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
 
     def _ev_switch_menu(self, event):
@@ -185,7 +185,7 @@ class ConfFrame(wx.Frame):
     def _ev_save_para(self, event):
 
         self.sys_para["operate_sys"] = self.sel_operate_cmbo.GetStringSelection()
-        Base_File_Oper.save_sys_para("sys_para.json", self.sys_para)
+        FileUtil.save_sys_para("sys_para.json", self.sys_para)
         MessageDialog("存储完成！点击界面顶部的菜单栏->主菜单->返回")
 
     def _ev_enter_stcode(self, event):
@@ -196,7 +196,7 @@ class ConfFrame(wx.Frame):
                if v[1] == event.GetId():
                    self.sys_para["multi-panels"][v[0]] = int(event.GetString())
                    break
-            Base_File_Oper.save_sys_para("sys_para.json", self.sys_para)
+            FileUtil.save_sys_para("sys_para.json", self.sys_para)
 
         elif event.GetId() < 400:
             # 行情MPL
@@ -204,7 +204,7 @@ class ConfFrame(wx.Frame):
                if v[1] == event.GetId():
                    self.firm_para["layout_dict"][v[0]] = float(event.GetString())
                    break
-            Base_File_Oper.save_sys_para("firm_para.json", self.firm_para)
+            FileUtil.save_sys_para("firm_para.json", self.firm_para)
 
         else:
             # 回测MPL
@@ -212,7 +212,7 @@ class ConfFrame(wx.Frame):
                if v[1] == event.GetId():
                    self.back_para["layout_dict"][v[0]] = float(event.GetString())
                    break
-            Base_File_Oper.save_sys_para("back_para.json", self.back_para)
+            FileUtil.save_sys_para("back_para.json", self.back_para)
         MessageDialog("存储完成！")
 
 class MainApp(wx.App):
