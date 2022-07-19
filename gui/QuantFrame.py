@@ -106,32 +106,43 @@ class QuantFrame(wx.Frame):
         # 创建显示区面板
         self.QuantPanel = Sys_Panel(rightPanel, **firm_para['layout_dict'])  # 自定义
         self.BackMplPanel = Sys_Panel(rightPanel, **back_para['layout_dict'])  # 自定义
+        self.BackMplPanel.Hide()
         self.tempStockPanel = self.QuantPanel
 
         # 第二层布局
         self.vbox_sizer_right = wx.BoxSizer(wx.VERTICAL)  # 纵向box
         self.vbox_sizer_right.SetMinSize((800, 800))
-        self.vbox_sizer_right.Add(self._init_param_notebook(rightPanel), proportion=1, flag=wx.EXPAND | wx.TOP, border=5)  # 添加行情参数布局
+        self.vbox_sizer_right.Add(self._init_param_notebook(rightPanel), proportion=1, flag=wx.EXPAND | wx.ALL, border=5)  # 添加行情参数布局
+        self.vbox_sizer_right.Add(self.tempStockPanel, proportion=9, flag=wx.EXPAND | wx.ALL, border=5)  # 添加行情参数布局
+
         # 创建text日志对象
-        self.vbox_sizer_right.Add(self._init_patten_log(rightPanel), proportion=10,
-                                  flag=wx.EXPAND | wx.BOTTOM, border=5)
+        self._init_patten_log(rightPanel)
         self._init_grid_pk(rightPanel)
-        # self.vbox_sizer_right.Add(self._init_grid_pk(rightPanel), proportion=10,
-        #                           flag=wx.EXPAND | wx.BOTTOM, border=5)
         self.vbox_sizer_right.Fit(self)
         rightPanel.SetSizer(self.vbox_sizer_right)
 
         # 第一层布局
+        self._init_status_bar()
+        self._init_menu_bar()
+        toolbar = self._create_toolbar(mainPanel)
+        toolbar.Bind(wx.EVT_TOOL, self.OnEventTrig)
+        self._mgr.AddPane(toolbar, aui.AuiPaneInfo().Name('').Caption('工具条').ToolbarPane().Right().Floatable(True))
+        self._mgr.AddPane(self.leftPanel,
+                          aui.AuiPaneInfo().
+                          Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).
+                          MinSize((self.leftWidth, self.leftHeight)).
+                          Floatable(True).FloatingSize((self.leftWidth, self.leftHeight)).
+                          # Caption("wxPython").
+                          CloseButton(False).
+                          Name("LeftPanel"))
+        self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
         self.mainPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
-        # self.mainPanelSizer.Add(self.vbox_sizer_left, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
-        # self.mainPanelSizer.Add(self.vbox_sizer_right, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
-
+        mainPanel.Layout()
         # 初始化全部页面
-        # self._init_patten_log(rightPanel)
-        self.switch_content_panel(self.patten_log_sizer, self.grid_pick_box, False)
-        self.switch_content_panel(self.grid_pick_box, self.BackMplPanel, False)
-        self.switch_content_panel(self.BackMplPanel, self.QuantPanel, True)  # 等类型替换
-        self.switch_content_panel(self.QuantPanel, self.patten_log_sizer, False)
+        # self.switch_content_panel(self.patten_log_sizer, self.grid_pick_box, False)
+        # self.switch_content_panel(self.grid_pick_box, self.BackMplPanel, False)
+        # self.switch_content_panel(self.BackMplPanel, self.QuantPanel, True)  # 等类型替换
+        # self.switch_content_panel(self.QuantPanel, self.patten_log_sizer, False)
 
 
         self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效
@@ -151,21 +162,6 @@ class QuantFrame(wx.Frame):
         self.code_pool = CodePoolUtil(self.syslog)
         self.grid_stock_pool.SetTable(self.code_pool.load_my_pool(), ["自选股", "代码"])
 
-        self._init_status_bar()
-        self._init_menu_bar()
-
-        toolbar = self._create_toolbar(mainPanel)
-        toolbar.Bind(wx.EVT_TOOL, self.OnEventTrig)
-        self._mgr.AddPane(toolbar, aui.AuiPaneInfo().Name('').Caption('工具条').ToolbarPane().Right().Floatable(True))
-        self._mgr.AddPane(self.leftPanel,
-                          aui.AuiPaneInfo().
-                          Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).
-                          MinSize((self.leftWidth, self.leftHeight)).
-                          Floatable(True).FloatingSize((self.leftWidth, self.leftHeight)).
-                          # Caption("wxPython").
-                          CloseButton(False).
-                          Name("LeftPanel"))
-        self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
         self._mgr.Update()
         self._mgr.SetAGWFlags(self._mgr.GetAGWFlags() ^ aui.AUI_MGR_TRANSPARENT_DRAG)
 
@@ -283,9 +279,8 @@ class QuantFrame(wx.Frame):
     def switch_content_panel(self, org_panel=None, new_panel=None, inplace=True):
 
         if id(org_panel) != id(new_panel):
-
+            # if not org_panel.IsShown():
             self.vbox_sizer_right.Hide(org_panel)
-
             if inplace:
                 self.vbox_sizer_right.Replace(org_panel, new_panel)  # 等类型可替换
             else:
@@ -293,13 +288,14 @@ class QuantFrame(wx.Frame):
                 self.vbox_sizer_right.Detach(org_panel)
                 self.vbox_sizer_right.Add(new_panel, proportion=10, flag=wx.EXPAND | wx.BOTTOM, border=5)
             self.vbox_sizer_right.Show(new_panel)
+            self.vbox_sizer_right.Layout()
 
     def _ev_change_notebook(self, event):
         # print(self.paramNotebook.GetSelection())
         old = event.GetOldSelection()
         new = event.GetSelection()
 
-        sw_obj = [[self.QuantPanel, self.FlexGridSizer], self.BackMplPanel, self.grid_pick_box, self.patten_log_sizer]
+        sw_obj = [[self.QuantPanel, self.FlexGridSizer], self.BackMplPanel, self.grid_pick, self.patten_log_text]
 
         if (old >= len(sw_obj)) or (new >= len(sw_obj)):
             raise ValueError(u"切换面板号出错！")
@@ -618,23 +614,19 @@ class QuantFrame(wx.Frame):
 
     def _init_grid_pk(self, parent):
         # 初始化选股表格
-        self.grid_pick_box = wx.BoxSizer(wx.VERTICAL)
         self.grid_pick = GridTable(parent=parent)
         self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._ev_cell_lclick_pkcode, self.grid_pick)
         self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self._ev_label_lclick_pkcode, self.grid_pick)
 
         self.df_use = pd.DataFrame()
         self.filte_result = pd.DataFrame()
-        self.grid_pick_box.Add(self.grid_pick, proportion= 0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        return self.grid_pick_box
+        self.grid_pick.Hide()
 
     def _init_patten_log(self, parent):
         # 创建形态选股日志
-        self.patten_log_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.patten_log_text = wx.TextCtrl(parent=parent, style=wx.TE_MULTILINE, size=(self.rightWidth, 25))
+        self.patten_log_text = wx.TextCtrl(parent=parent, style=wx.TE_MULTILINE, size=(self.rightWidth, 20))
         self.patten_log_text.AppendText("hello world")
-        self.patten_log_sizer.Add(self.patten_log_text, proportion=1, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
-        return self.patten_log_sizer
+        self.patten_log_text.Hide()
 
     def _init_grid_stock_pool(self, parent):
         # 初始化股票池表格
