@@ -3,7 +3,7 @@ import wx
 from gui.wigets.StockPanel import StockPanel
 
 
-class SubGraphs:
+class MpfGraphs:
     def __init__(self, parent):
 
         # 创建FlexGridSizer布局网格 vgap定义垂直方向上行间距/hgap定义水平方向上列间距

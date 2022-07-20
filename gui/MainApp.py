@@ -11,19 +11,23 @@ from gui.BenchFrame import BenchFrame
 from gui.QuantFrame import QuantFrame
 
 from gui.MainFrame import MainFrame
-from gui.UserFrame import UserFrame
 from gui.ConfFrame import ConfFrame
 from gui.DataFrame import DataFrame
 
+USE_WIT = True
+
+AppBaseClass = wx.App
+if USE_WIT:
+    from wx.lib.mixins.inspection import InspectableApp
+    AppBaseClass = InspectableApp
 
 class GuiManager():
     def __init__(self, Fun_SwFrame):
         self.fun_swframe = Fun_SwFrame
         self.frameDict = {}  # 用来装载已经创建的Frame对象
-        # hack to help on dual-screen, need something better XXX - idfah
         displaySize = wx.DisplaySize()  # (1920, 1080)
-        MIN_DISPLAYSIZE = 1280, 1024
-        if (displaySize[0] < MIN_DISPLAYSIZE[0]) or (MIN_DISPLAYSIZE[1] < 1024):
+        MIN_DISPLAYSIZE = 1024, 800
+        if (displaySize[0] < MIN_DISPLAYSIZE[0]) or (displaySize[1] < MIN_DISPLAYSIZE[1]):
             self.msg_dialog(f"由于您的显示器分辨率过低(低于{MIN_DISPLAYSIZE[0]},{MIN_DISPLAYSIZE[1]})，会导致部分控件显示异常！\
                            请调整显示器设置的【缩放比例】及【分辨率】")
             self.displaySize = MIN_DISPLAYSIZE[0], MIN_DISPLAYSIZE[1]
@@ -52,8 +56,6 @@ class GuiManager():
         elif type == 1:  # 量化分析界面
             return QuantFrame(parent=None, id=type,
                               displaySize=self.displaySize, Fun_SwFrame=self.fun_swframe)
-            # return UserFrame(parent=None, id=type,
-            #                  displaySize=self.displaySize, Fun_SwFrame=self.fun_swframe)
         elif type == 2:  # 数据管理界面
             return DataFrame(parent=None, id=type,
                              displaySize=wx.DisplaySize(), Fun_SwFrame=self.fun_swframe)
@@ -64,7 +66,7 @@ class GuiManager():
                              displaySize=wx.DisplaySize(), Fun_SwFrame=self.fun_swframe)
 
 
-class MainApp(wx.App):
+class MainApp(AppBaseClass):
     frame = None
     manager = None
 
@@ -75,9 +77,12 @@ class MainApp(wx.App):
         self.manager = GuiManager(self.SwitchFrame)
         self.frame = self.manager.get_frame(0)
         # self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
-        self.frame.Show()
-        self.frame.Center()
         self.SetTopWindow(self.frame)
+        self.frame.Center()
+        if USE_WIT:
+            print("Press Ctrl-Alt-I (Cmd-Opt-I on Mac) to launch the WITH.")
+            self.InitInspection()
+        self.frame.Show()
         return True
 
     def SwitchFrame(self, type):

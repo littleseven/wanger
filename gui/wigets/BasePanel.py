@@ -15,7 +15,6 @@ class BasePanel(wx.Panel):
         # 分割子图实现代码
         self.figure = Figure(figsize=(sys_para["multi-panels"]["mpl_fig_x"],
                                       sys_para["multi-panels"]["mpl_fig_y"]))  # 调整尺寸-figsize(x,y)
-
         gs = gridspec.GridSpec(2, 1, left=sys_para["multi-panels"]["mpl_fig_left"],
                                bottom=sys_para["multi-panels"]["mpl_fig_bottom"],
                                right=sys_para["multi-panels"]["mpl_fig_right"],
@@ -27,6 +26,7 @@ class BasePanel(wx.Panel):
 
         self.FigureCanvas = FigureCanvas(self, -1, self.figure)  # figure加到FigureCanvas
         self.TopBoxSizer = wx.BoxSizer(wx.VERTICAL)
+        # self.TopBoxSizer.SetMinSize(800, 800)
         self.TopBoxSizer.Add(self.FigureCanvas, proportion=10, border=2, flag=wx.ALL | wx.EXPAND)
 
         self.SetSizer(self.TopBoxSizer)

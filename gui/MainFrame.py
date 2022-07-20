@@ -8,11 +8,11 @@ import wx.grid
 import wx.html2
 import os
 
-class MainFrame(wx.Frame):
 
+class MainFrame(wx.Frame):
     rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
 
-    def __init__(self, parent=None, id=-1, displaySize=(1550, 900), Fun_SwFrame=None):
+    def __init__(self, parent=None, id=-1, displaySize=(1280, 800), Fun_SwFrame=None):
 
         displaySize = 0.05 * displaySize[0], 0.5 * displaySize[1]
 
@@ -42,10 +42,9 @@ class MainFrame(wx.Frame):
         elif event.GetId() == 1101:  # 数据按钮
             self.fun_swframe(2)
         elif event.GetId() == 1102:  # 选股按钮
-            #self.fun_swframe(3)
+            # self.fun_swframe(3)
             print("功能预留-后期实现！")
         elif event.GetId() == 1103:  # 配置按钮
             self.fun_swframe(4)
         else:
             pass
-

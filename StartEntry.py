@@ -5,8 +5,6 @@
 import os
 import sys
 
-from wx.lib.inspection import InspectionTool
-
 from gui.MainApp import MainApp
 
 # os.path.abspath('.') 表示当前所处的文件夹的绝对路径
@@ -16,9 +14,7 @@ for root, dirs, files in os.walk(os.path.abspath('.')):
     sys.path.append(root) # 添加到环境变量中
 
 if __name__ == '__main__':
-
-    app = MainApp()
-    InspectionTool().Show()
+    app = MainApp(redirect=True)
     app.MainLoop()
 
 

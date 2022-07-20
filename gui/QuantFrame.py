@@ -19,8 +19,8 @@ from wx.lib.agw import aui
 
 from gui.MainPanel import MainPanel
 from gui.wigets.SysPanel import Sys_Panel
-from gui.wigets.SubGraph import SubGraphs
-from gui.wigets.DefEchart import WebGraphs
+from gui.wigets.MpfGraphs import MpfGraphs
+from gui.wigets.WebGraphs import WebGraphs
 from gui.wigets.DefTreelist import CollegeTreeListCtrl
 from gui.wigets.DefGrid import GridTable
 from gui.wigets.DefEchart import Pyechart_Drive
@@ -142,8 +142,6 @@ class QuantFrame(wx.Frame):
         # self.switch_content_panel(self.patten_log_sizer, self.grid_pick_box, False)
         # self.switch_content_panel(self.grid_pick_box, self.BackMplPanel, False)
         # self.switch_content_panel(self.BackMplPanel, self.QuantPanel, True)  # 等类型替换
-        # self.switch_content_panel(self.QuantPanel, self.patten_log_sizer, False)
-
 
         self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效
         self.mainPanelSizer.Layout()
@@ -164,6 +162,7 @@ class QuantFrame(wx.Frame):
 
         self._mgr.Update()
         self._mgr.SetAGWFlags(self._mgr.GetAGWFlags() ^ aui.AUI_MGR_TRANSPARENT_DRAG)
+        self.CenterOnScreen(wx.BOTH)
 
     def _init_treelist_ctrl(self, subpanel):
 
@@ -665,12 +664,12 @@ class QuantFrame(wx.Frame):
         if item != 0 and self.pick_graph_last == 0:  # 单图切到多子图
 
             if item <= 4:  # 1-4 属于MPL显示区
-                self.graphs_obj = SubGraphs(self.rightPanel)
+                self.graphs_obj = MpfGraphs(self.rightPanel)
             elif item <= 8:  # 5-8 属于WEB显示区
                 self.graphs_obj = WebGraphs(self.rightPanel)
             else:  # 故障保护
                 MessageDialog("一级切换-0错误！")
-                self.graphs_obj = SubGraphs(self.rightPanel)
+                self.graphs_obj = MpfGraphs(self.rightPanel)
             self.switch_content_panel(self.QuantPanel, self.graphs_obj.FlexGridSizer, False)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
 
@@ -679,7 +678,7 @@ class QuantFrame(wx.Frame):
             self.switch_content_panel(self.FlexGridSizer, self.QuantPanel, False)
 
         elif item <= 4 and self.pick_graph_last > 4:
-            self.graphs_obj = SubGraphs(self.rightPanel)
+            self.graphs_obj = MpfGraphs(self.rightPanel)
             self.switch_content_panel(self.FlexGridSizer, self.graphs_obj.FlexGridSizer, True)
             self.FlexGridSizer = self.graphs_obj.FlexGridSizer
 
