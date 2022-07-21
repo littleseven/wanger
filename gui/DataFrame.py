@@ -14,9 +14,12 @@ import wx.grid
 
 from datetime import datetime
 
+from wx.lib.agw import aui
+
 from datautil.Tushare import basic_code_list
 from datautil.CsvData import CsvBackend
 from datautil.HistoryOCHLV import download_stock_hist_from_netease
+from gui.MainPanel import MainPanel
 from gui.wigets.DefDialog import MessageDialog, ViewGripDiag, ProgressDialog, DouBottomDialog, RpsTop10Dialog
 from strategy.PattenGath import Base_Patten_Group
 from strategy.IndicateGath import Base_Indicate_Group
@@ -30,7 +33,22 @@ q_results = queue.Queue(5000)
 # 创建本地存储路径
 data_path = os.path.dirname(os.path.dirname(__file__)) + '/datafiles/stock_history/'
 
-def save_df_to_csv(df, path, max_try_num = 5, sleep_time = 5):
+
+def init_down_path(data_path):
+    # 数据保存路径
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)  # 创建目录
+    # 已下载历史行情的股票
+    down_stock_list = []
+    for _root, _dirs, _files in os.walk(data_path):
+        down_stock_list = [f.rstrip('.csv') for f in _files if f.endswith('.csv')]
+    return down_stock_list
+
+
+down_stock_list = init_down_path(data_path)  # global
+
+
+def save_df_to_csv(df, path, max_try_num=5, sleep_time=5):
     """
     保存df到csv文件
     :param:df
@@ -41,28 +59,16 @@ def save_df_to_csv(df, path, max_try_num = 5, sleep_time = 5):
     is_success = False
     for i in range(max_try_num):
         try:
-            df.to_csv(path, encoding = 'GBK')
+            df.to_csv(path, encoding='GBK')
             is_success = True
             break
         except Exception as e:
-            print('第{}次保存csv文件报错,请检查'.format(i+1))
+            print('第{}次保存csv文件报错,请检查'.format(i + 1))
             time.sleep(sleep_time)
     return is_success
 
-def init_down_path(data_path):
-    # 数据保存路径
-    if not os.path.exists(data_path):
-        os.mkdir(data_path) # 创建目录
-    # 已下载历史行情的股票
-    down_stock_list = []
-    for _root, _dirs, _files in os.walk(data_path):
-        down_stock_list = [f.rstrip('.csv') for f in _files if f.endswith('.csv')]
-    return down_stock_list
 
-# 创建已下载股票清单
-down_stock_list = init_down_path(data_path) # global
-
-def save_to_csv(df, path, sleep_time = 5):
+def save_to_csv(df, path, sleep_time=5):
     """
     保存df到csv文件
     :param:df
@@ -73,12 +79,13 @@ def save_to_csv(df, path, sleep_time = 5):
     is_success = False
 
     try:
-        df.to_csv(path, encoding = 'GBK')
+        df.to_csv(path, encoding='GBK')
         is_success = True
     except Exception as e:
         print('保存csv文件报错!')
         time.sleep(sleep_time)
     return is_success
+
 
 def get_stock_data(stcok_code):
     """
@@ -93,7 +100,7 @@ def get_stock_data(stcok_code):
 
         try:
             df = pd.read_csv(data_path + stcok_code + '.csv', index_col=0, parse_dates=[u"日期"], encoding='GBK',
-                             engine='python') # 文件名中含有中文时使用engine为python
+                             engine='python')  # 文件名中含有中文时使用engine为python
 
             # 已经有数据，更新到今日
             if len(df):
@@ -110,7 +117,7 @@ def get_stock_data(stcok_code):
                         df.drop_duplicates(subset=['日期'], keep='last', inplace=True)
                         is_saved = save_to_csv(df, data_path + stcok_code + '.csv')
                         if is_saved:
-                            #print('{0}更新了{1}条数据'.format(stcok_code, df_new.shape[0]))
+                            # print('{0}更新了{1}条数据'.format(stcok_code, df_new.shape[0]))
                             res_info["status"] = "Success"
                             res_info["number"] = df_new.shape[0]
                     except:
@@ -122,11 +129,11 @@ def get_stock_data(stcok_code):
                     res_info["status"] = "Success"
                     res_info["number"] = 0
 
-            else: # 有文件没数据，下载全部数据
+            else:  # 有文件没数据，下载全部数据
                 df = download_stock_hist_from_netease(stcok_code)
                 is_saved = save_to_csv(df, data_path + stcok_code + '.csv')
                 if is_saved:
-                    #print('{0}更新了{1}条数据'.format(stcok_code, df.shape[0]))
+                    # print('{0}更新了{1}条数据'.format(stcok_code, df.shape[0]))
                     res_info["status"] = "Success"
                     res_info["number"] = df.shape[0]
 
@@ -136,12 +143,11 @@ def get_stock_data(stcok_code):
             res_info["number"] = "None"
     # 如果未下载该股票历史行情数据，即csv文件不存在，下载截止今日的历史数据
     else:
-
         try:
             df = download_stock_hist_from_netease(stcok_code)
             is_saved = save_to_csv(df, data_path + stcok_code + '.csv')
             if is_saved:
-                #print('{0}更新了{1}条数据'.format(stcok_code, df.shape[0]))
+                # print('{0}更新了{1}条数据'.format(stcok_code, df.shape[0]))
                 res_info["status"] = "Success"
                 res_info["number"] = df.shape[0]
         except:
@@ -149,6 +155,7 @@ def get_stock_data(stcok_code):
             res_info["status"] = "Fail"
             res_info["number"] = "None"
     return res_info
+
 
 class ProgressBarThread(threading.Thread):
     """ 进度条类 """
@@ -163,7 +170,6 @@ class ProgressBarThread(threading.Thread):
         self.setDaemon(True)  # 设置为守护线程， 即子线程是守护进程，主线程结束子线程也随之结束。
 
     def run(self):
-
         q_size = q_codes.qsize()  # 返回队列的大小
 
         while q_size != 0:
@@ -172,8 +178,10 @@ class ProgressBarThread(threading.Thread):
             wx.CallAfter(self.parent.update_process_bar, q_size)  # 更新进度条进度
         wx.CallAfter(self.parent.close_process_bar)  # destroy进度条
 
+
 class CrawlerThread(threading.Thread):
     """爬虫类"""
+
     def __init__(self, parent):
 
         super(CrawlerThread, self).__init__()
@@ -186,6 +194,7 @@ class CrawlerThread(threading.Thread):
             results = get_stock_data(code)
             if q_results.full() != True:
                 q_results.put(results)
+
 
 class CollegeTreeListCtrl(wx.gizmos.TreeListCtrl):
 
@@ -210,27 +219,37 @@ class CollegeTreeListCtrl(wx.gizmos.TreeListCtrl):
 
     def refDataShow(self, newDatas):
 
-        if down_stock_list != None:
+        if down_stock_list is not None:
             self.root = self.AddRoot(data_path)
             self.SetItemText(self.root, data_path, 0)
-            self.SetItemText(self.root, u" (共" + str(len(down_stock_list)) + u"个)", 1) # 第1列上添加
+            self.SetItemText(self.root, u" (共" + str(len(down_stock_list)) + u"个)", 1)  # 第1列上添加
 
-            for cityID in down_stock_list: # 将本地csv文件填充整个树
+            for cityID in down_stock_list:  # 将本地csv文件填充整个树
 
                 child = self.AppendItem(self.root, cityID)
-                self.SetItemText(child, cityID+".csv", 0)
-                self.SetItemText(child, newDatas.get(cityID[2:8]+"."+cityID[0:2].upper(), ''), 1)
-                self.SetItemImage(child, 0, which=wx.TreeItemIcon_Normal) # wx.TreeItemIcon_Expanded
+                self.SetItemText(child, cityID + ".csv", 0)
+                self.SetItemText(child, newDatas.get(cityID[2:8] + "." + cityID[0:2].upper(), ''), 1)
+                self.SetItemImage(child, 0, which=wx.TreeItemIcon_Normal)  # wx.TreeItemIcon_Expanded
                 self.Expand(self.root)
+
 
 class DataFrame(wx.Frame):
 
     def __init__(self, parent=None, id=-1, displaySize=(1600, 900), Fun_SwFrame=None):
 
-        wx.Frame.__init__(self, parent, title="股票历史数据下载工具", size=displaySize, style=wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(self, parent, title=u"股票历史数据下载工具", size=displaySize, style=wx.DEFAULT_FRAME_STYLE)
+        self.setFrameSize(displaySize)
+        self.SetMinSize((640, 480))
 
         # 用于量化工具集成到整体系统中
         self.fun_swframe = Fun_SwFrame
+        # 用 aui 做整体布局
+        self._mgr = aui.AuiManager()
+        self.mainPanel = mainPanel = MainPanel(self)
+        self._mgr.SetManagedWindow(self.mainPanel)
+
+        self.leftPanel = leftPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
+        self.rightPanel = rightPanel = wx.Panel(mainPanel, -1)
 
         ################################### 变量初始化 ###################################
 
@@ -241,7 +260,7 @@ class DataFrame(wx.Frame):
         self.stock_tree_info = dict(zip(df_basic.ts_code.values, df_basic.name.values))
         self.total_len = len(self.stock_list_all)
 
-        self.failed_list = [] # 更新失败列表
+        self.failed_list = []  # 更新失败列表
 
         self.start_time = time.perf_counter()
         self.elapsed_time = time.perf_counter()
@@ -250,19 +269,19 @@ class DataFrame(wx.Frame):
         ################################### 第一层布局 Left ###################################
 
         # 创建并初始化策略树
-        self.init_tree()
+        self.init_tree(self.leftPanel)
 
         # 下载按钮
-        self.start_but = wx.Button(self, -1, "开始下载")
+        self.start_but = wx.Button(self.leftPanel, -1, "开始下载")
         self.start_but.Bind(wx.EVT_BUTTON, self.on_click_start)  # 绑定按钮事件
 
         # 刷新按钮
-        self.fresh_but = wx.Button(self, -1, "刷新文件")
-        self.fresh_but.Bind(wx.EVT_BUTTON, self.on_click_fresh) # 绑定按钮事件
+        self.fresh_but = wx.Button(self.leftPanel, -1, "刷新文件")
+        self.fresh_but.Bind(wx.EVT_BUTTON, self.on_click_fresh)  # 绑定按钮事件
 
         # 补全按钮
-        self.compt_but = wx.Button(self, -1, "补全下载")
-        self.compt_but.Bind(wx.EVT_BUTTON, self.on_click_compt) # 绑定按钮事件
+        self.compt_but = wx.Button(self.leftPanel, -1, "补全下载")
+        self.compt_but.Bind(wx.EVT_BUTTON, self.on_click_compt)  # 绑定按钮事件
 
         self.btnSizer = wx.FlexGridSizer(rows=1, cols=3, vgap=2, hgap=3)
         self.btnSizer.Add(self.start_but, flag=wx.ALIGN_CENTER)
@@ -271,26 +290,27 @@ class DataFrame(wx.Frame):
 
         ################################### 第一层布局 right ###################################
 
-        self.ParaPanel = wx.Panel(self, -1)
-        self.ParaPanel.SetSizer(self.add_patten_para_lay(self.ParaPanel)) # 形态选股 patten
-
-        vboxnetB = wx.BoxSizer(wx.VERTICAL) # 纵向box
-        vboxnetB.Add(self.ParaPanel, proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
-        vboxnetB.Add(self._init_patten_log(), proportion=10, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
+        self.right_boxsizer = wx.BoxSizer(wx.VERTICAL)  # 纵向box
+        self.right_boxsizer.Add(self.add_patten_para_lay(self.rightPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
+        self.right_boxsizer.Add(self._init_patten_log(self.rightPanel), proportion=10, flag=wx.EXPAND | wx.BOTTOM,
+                           border=2)  # proportion参数控制容器尺寸比例
+        self.rightPanel.SetSizer(self.right_boxsizer)  # 形态选股 patten
+        # self.right_boxsizer.SetMinSize((800, 800))
 
         ################################### 第二层布局 ###################################
 
-        vboxnetA = wx.BoxSizer(wx.VERTICAL) # 纵向box
-        vboxnetA.Add(self.treeListCtrl, proportion=0, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
-        vboxnetA.Add(self._init_startup_log(), proportion=0, flag=wx.EXPAND | wx.BOTTOM, border=2) # 创建并初始化日志框
-        vboxnetA.Add(self.btnSizer, proportion=0, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
+        self.left_boxsizer = wx.BoxSizer(wx.VERTICAL)  # 纵向box
+        self.left_boxsizer.Add(self.treeListCtrl, proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
+        self.left_boxsizer.Add(self._init_startup_log(self.leftPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=2)  # 创建并初始化日志框
+        self.left_boxsizer.Add(self.btnSizer, proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=2)  # proportion参数控制容器尺寸比例
+        self.leftPanel.SetSizer(self.left_boxsizer)  # 形态选股 patten
 
         self.HBoxPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.HBoxPanelSizer.Add(vboxnetA, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
-        self.HBoxPanelSizer.Add(vboxnetB, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
+        # self.HBoxPanelSizer.Add(self.left_boxsizer, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
+        # self.HBoxPanelSizer.Add(self.right_boxsizer, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
 
-        self.SetSizer(self.HBoxPanelSizer) # 使布局有效
-
+        self.mainPanel.SetSizer(self.HBoxPanelSizer)  # 使布局有效
+        self.mainPanel.Layout()
         ################################### 辅助配置 ###################################
         # 创建形态选股日志
         self.patlog = PatLogIf(self.patten_log_tx)
@@ -299,6 +319,24 @@ class DataFrame(wx.Frame):
         self._init_menu_bar()
         # 创建状态栏
         self._init_status_bar()
+
+        self._mgr.AddPane(self.leftPanel,
+                          aui.AuiPaneInfo().
+                          Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).
+                          MinSize((self.leftWidth, self.leftHeight)).
+                          Floatable(True).FloatingSize((self.leftWidth, self.leftHeight)).
+                          CloseButton(False).
+                          Name("LeftPanel"))
+        self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
+        self.mainPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.mainPanelSizer.SetMinSize(800, 800)
+        self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效
+        self.mainPanelSizer.Layout()
+
+        self._mgr.Update()
+        self._mgr.SetAGWFlags(self._mgr.GetAGWFlags() ^ aui.AUI_MGR_TRANSPARENT_DRAG)
+        self.CenterOnScreen(wx.BOTH)
+
 
     def _init_menu_bar(self):
 
@@ -321,7 +359,7 @@ class DataFrame(wx.Frame):
 
     def _init_status_bar(self):
 
-        self.statusBar = self.CreateStatusBar() # 创建状态条
+        self.statusBar = self.CreateStatusBar()  # 创建状态条
         # 将状态栏分割为3个区域,比例为2:1
         self.statusBar.SetFieldsCount(3)
         self.statusBar.SetStatusWidths([-2, -1, -1])
@@ -331,16 +369,15 @@ class DataFrame(wx.Frame):
         self.SetStatusText(time.strftime("%Y-%B-%d %I:%M:%S", t), 2)
         self.Center()
 
-    def init_tree(self):
-        self.treeListCtrl = CollegeTreeListCtrl(parent=self, size=(200, 400))
+    def init_tree(self, parent):
+        self.treeListCtrl = CollegeTreeListCtrl(parent=parent, size=(200, 400))
         self.treeListCtrl.Bind(wx.EVT_TREE_SEL_CHANGED, self.event_OnTreeListCtrlClickFunc)
-        self.treeListCtrl.refDataShow(self.stock_tree_info) # TreeCtrl显示数据接口
+        self.treeListCtrl.refDataShow(self.stock_tree_info)  # TreeCtrl显示数据接口
 
     def update_process_bar(self, count):
         self.dialog.Update(self.total_len - count)
 
     def close_process_bar(self):
-
         self.dialog.Destroy()
         self.startup_log_tx.Clear()
         update_all_count = 0
@@ -352,18 +389,20 @@ class DataFrame(wx.Frame):
         while not q_results.empty():
             info = q_results.get()
 
-            self.startup_log_tx.AppendText("股票代码:{}; 更新状态:{}; 更新数目:{} \n".format(info["code"], info["status"], info["number"]))
+            self.startup_log_tx.AppendText(
+                "股票代码:{}; 更新状态:{}; 更新数目:{} \n".format(info["code"], info["status"], info["number"]))
 
             if info["status"] == "Success":
                 update_success_count += 1
                 update_all_count += 1
             elif info["status"] == "Fail":
                 update_fail_count += 1
-                #self.log_tx.AppendText('更新失败的股票为：{}\n'.format(info["code"]))
+                # self.log_tx.AppendText('更新失败的股票为：{}\n'.format(info["code"]))
                 self.failed_list.append(info["code"])
 
-        self.startup_log_tx.AppendText('*'*10)
-        self.startup_log_tx.AppendText('\n共更新{}支股票，{}支股票增加数据，{}支股票更新失败\n'.format(update_all_count, update_success_count, update_fail_count))
+        self.startup_log_tx.AppendText('*' * 10)
+        self.startup_log_tx.AppendText(
+            '\n共更新{}支股票，{}支股票增加数据，{}支股票更新失败\n'.format(update_all_count, update_success_count, update_fail_count))
         self.startup_log_tx.AppendText('\n共耗时{}秒\n'.format(self.elapsed_time - self.start_time))
 
     ################################### 形态选股相关 ###################################
@@ -371,20 +410,22 @@ class DataFrame(wx.Frame):
     def add_patten_para_lay(self, sub_panel):
 
         # 形态选股参数
-        patten_para_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.patten_para_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         # 形态选股参数——日历控件时间周期
         self.patten_end_time = wx.adv.DatePickerCtrl(sub_panel, -1,
-                                                  style = wx.adv.DP_DROPDOWN|wx.adv.DP_SHOWCENTURY|wx.adv.DP_ALLOWNONE)#结束时间
+                                                     style=wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY | wx.adv.DP_ALLOWNONE)  # 结束时间
         self.patten_start_time = wx.adv.DatePickerCtrl(sub_panel, -1,
-                                                    style = wx.adv.DP_DROPDOWN|wx.adv.DP_SHOWCENTURY|wx.adv.DP_ALLOWNONE)#起始时间
+                                                       style=wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY | wx.adv.DP_ALLOWNONE)  # 起始时间
 
         self.patten_start_date_box = wx.StaticBox(sub_panel, -1, u'开始日期(Start)')
         self.patten_end_date_box = wx.StaticBox(sub_panel, -1, u'结束日期(End)')
         self.patten_start_date_sizer = wx.StaticBoxSizer(self.patten_start_date_box, wx.VERTICAL)
         self.patten_end_date_sizer = wx.StaticBoxSizer(self.patten_end_date_box, wx.VERTICAL)
-        self.patten_start_date_sizer.Add(self.patten_start_time, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
-        self.patten_end_date_sizer.Add(self.patten_end_time, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
+        self.patten_start_date_sizer.Add(self.patten_start_time, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER,
+                                         border=2)
+        self.patten_end_date_sizer.Add(self.patten_end_time, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER,
+                                       border=2)
 
         date_time_now = wx.DateTime.Now()  # wx.DateTime格式"03/03/18 00:00:00"
         self.patten_end_time.SetValue(date_time_now)
@@ -395,20 +436,23 @@ class DataFrame(wx.Frame):
         self.patten_period_sizer = wx.StaticBoxSizer(self.patten_period_box, wx.VERTICAL)
         self.patten_period_cbox = wx.ComboBox(sub_panel, -1, u"", choices=[u"日线"])
         self.patten_period_cbox.SetSelection(0)
-        self.patten_period_sizer.Add(self.patten_period_cbox, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
+        self.patten_period_sizer.Add(self.patten_period_cbox, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER,
+                                     border=2)
 
         # 形态选股参数——股票复权选择
         self.patten_authority_box = wx.StaticBox(sub_panel, -1, u'股票复权')
         self.patten_authority_sizer = wx.StaticBoxSizer(self.patten_authority_box, wx.VERTICAL)
         self.patten_authority_cbox = wx.ComboBox(sub_panel, -1, u"", choices=[u"前复权", u"后复权", u"不复权"])
         self.patten_authority_cbox.SetSelection(2)
-        self.patten_authority_sizer.Add(self.patten_authority_cbox, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
+        self.patten_authority_sizer.Add(self.patten_authority_cbox, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER,
+                                        border=2)
 
         # 形态选股参数———形态类型选取
         self.patten_type_box = wx.StaticBox(sub_panel, -1, u'选股模型')
         self.patten_type_sizer = wx.StaticBoxSizer(self.patten_type_box, wx.HORIZONTAL)
 
-        self.patten_type_cmbo = wx.ComboBox(sub_panel, -1,  choices=["不启用", "双底形态", "RPS-Top10", "跳空缺口-预留","金叉死叉-预留","线性回归-预留"],
+        self.patten_type_cmbo = wx.ComboBox(sub_panel, -1,
+                                            choices=["不启用", "双底形态", "RPS-Top10", "跳空缺口-预留", "金叉死叉-预留", "线性回归-预留"],
                                             style=wx.CB_READONLY | wx.CB_DROPDOWN)  # 选股项
         self.patten_type_cmbo.SetSelection(1)
         self.patten_type_sizer.Add(self.patten_type_cmbo, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
@@ -417,7 +461,7 @@ class DataFrame(wx.Frame):
         self.patten_pool_box = wx.StaticBox(sub_panel, -1, u'股票池选取')
         self.patten_pool_sizer = wx.StaticBoxSizer(self.patten_pool_box, wx.HORIZONTAL)
 
-        self.patten_pool_cmbo = wx.ComboBox(sub_panel, -1,  choices=["全市场股票"],
+        self.patten_pool_cmbo = wx.ComboBox(sub_panel, -1, choices=["全市场股票"],
                                             style=wx.CB_READONLY | wx.CB_DROPDOWN)  # 选股项
         self.patten_pool_cmbo.SetSelection(0)
         self.patten_pool_sizer.Add(self.patten_pool_cmbo, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=2)
@@ -427,39 +471,40 @@ class DataFrame(wx.Frame):
         self.pick_patten_but.Bind(wx.EVT_BUTTON, self._ev_patten_select)  # 绑定按钮事件
 
         # 保存按钮
-        #self.save_patten_but = wx.Button(sub_panel, -1, "保存结果")
-        #self.save_patten_but.Bind(wx.EVT_BUTTON, self._ev_patten_save)  # 绑定按钮事件
+        # self.save_patten_but = wx.Button(sub_panel, -1, "保存结果")
+        # self.save_patten_but.Bind(wx.EVT_BUTTON, self._ev_patten_save)  # 绑定按钮事件
 
-        patten_para_sizer.Add(self.patten_start_date_sizer, proportion=0, flag=wx.EXPAND | wx.CENTER | wx.ALL, border=10)
-        patten_para_sizer.Add(self.patten_end_date_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        patten_para_sizer.Add(self.patten_period_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        patten_para_sizer.Add(self.patten_authority_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        patten_para_sizer.Add(self.patten_type_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        patten_para_sizer.Add(self.patten_pool_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        patten_para_sizer.Add(self.pick_patten_but, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
-        #patten_para_sizer.Add(self.save_patten_but, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        self.patten_para_sizer.Add(self.patten_start_date_sizer, proportion=0, flag=wx.EXPAND | wx.CENTER | wx.ALL, border=10)
+        self.patten_para_sizer.Add(self.patten_end_date_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        self.patten_para_sizer.Add(self.patten_period_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        self.patten_para_sizer.Add(self.patten_authority_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        self.patten_para_sizer.Add(self.patten_type_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        self.patten_para_sizer.Add(self.patten_pool_sizer, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        self.patten_para_sizer.Add(self.pick_patten_but, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
+        # patten_para_sizer.Add(self.save_patten_but, proportion=0, flag=wx.EXPAND | wx.ALL | wx.CENTER, border=10)
 
-        return patten_para_sizer
+        return self.patten_para_sizer
 
-    def _init_startup_log(self):
+    def _init_startup_log(self, parent):
 
-        self.startup_log_tx = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(200, 300)) # 启动相关日志
+        self.startup_log_tx = wx.TextCtrl(parent=parent, style=wx.TE_MULTILINE, size=(200, 300))  # 启动相关日志
 
         return self.startup_log_tx
 
-    def _init_patten_log(self):
+    def _init_patten_log(self, parent):
 
         # 创建形态选股日志
-        self.patten_log_tx = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(250, 300))
+        self.patten_log_tx = wx.TextCtrl(parent=parent, style=wx.TE_MULTILINE, size=(250, 300))
 
         return self.patten_log_tx
+
     ################################### 表格相关 ###################################
 
     def init_grid(self):
         self.grid = wx.grid.Grid(self, -1)
-        self.grid.CreateGrid(50, 11) # 初始化时默认生成
+        self.grid.CreateGrid(50, 11)  # 初始化时默认生成
 
-    def data_to_grid(self, df):
+    def data_to_grid(self, df, parent):
 
         self.grid = wx.grid.Grid(self, -1)
 
@@ -467,7 +512,7 @@ class DataFrame(wx.Frame):
             self.list_columns = df.columns.tolist()
             self.grid.CreateGrid(df.shape[0], df.shape[1])
 
-            for col, series in df.iteritems(): # 将DataFrame迭代为(列名, Series)对
+            for col, series in df.iteritems():  # 将DataFrame迭代为(列名, Series)对
                 m = self.list_columns.index(col)
                 self.grid.SetColLabelValue(m, col)
                 for n, val in enumerate(series):
@@ -477,10 +522,10 @@ class DataFrame(wx.Frame):
     def refresh_grid(self, update_df):
 
         self.grid.Destroy()  # 先摧毁 后创建
-        self.data_to_grid(update_df)
+        self.data_to_grid(update_df, self.leftPanel)
 
         self.HBoxPanelSizer.Add(self.grid, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
-        self.SetSizer(self.HBoxPanelSizer)  # 使布局有效
+        self.mainPanel.SetSizer(self.HBoxPanelSizer)  # 使布局有效
         self.HBoxPanelSizer.Layout()
 
     ################################### 事件函数 ###################################
@@ -581,7 +626,7 @@ class DataFrame(wx.Frame):
 
         if patten_type == "双底形态":
 
-            proc_dialog = ProgressDialog("开始分析", self.total_len+1)  # 根据股票数量设置进度条刻度长度
+            proc_dialog = ProgressDialog("开始分析", self.total_len + 1)  # 根据股票数量设置进度条刻度长度
 
             patten_recognize = DouBottomDialog(self, "双底形态识别参数配置")
 
@@ -601,7 +646,7 @@ class DataFrame(wx.Frame):
                         df_recon = pd.DataFrame(recon_data)
 
                         df_return = Base_Patten_Group.double_bottom_search(name, code, df_recon, self.patlog,
-                                                               **patten_recognize.feedback_paras())
+                                                                           **patten_recognize.feedback_paras())
 
                         if df_return.empty != True:
                             # 有效则添加至分析结果文件中
@@ -617,7 +662,7 @@ class DataFrame(wx.Frame):
 
             df_search = df_search[["股票名称", "股票代码",
                                    "形态识别", "左底id", "左底价格", "右底id", "右底价格", "中顶id", "中顶价格",
-                                   "收盘价格", "颈线价格","首次突破",
+                                   "收盘价格", "颈线价格", "首次突破",
                                    "突破幅度", "当日涨幅",
                                    "突破放量", "当前成交量-手", "平均成交量-手"]]
 
@@ -646,7 +691,7 @@ class DataFrame(wx.Frame):
 
         elif patten_type == "RPS-Top10":
 
-            proc_dialog = ProgressDialog("开始分析", self.total_len+1)  # 根据股票数量设置进度条刻度长度
+            proc_dialog = ProgressDialog("开始分析", self.total_len + 1)  # 根据股票数量设置进度条刻度长度
 
             rpstop_recognize = RpsTop10Dialog(self, "RPS-Top10识别参数配置")
 
@@ -721,10 +766,25 @@ class DataFrame(wx.Frame):
                     ax2.spines['right'].set_color('none')
                     ax2.spines['top'].set_color('none')
                     # 保存图片到本地
-                    plt.savefig(os.path.dirname(os.path.dirname(__file__)) + '/config/'+f'跟踪{track_name}的RPS.jpg')
+                    plt.savefig(os.path.dirname(os.path.dirname(__file__)) + '/config/' + f'跟踪{track_name}的RPS.jpg')
                     self.patlog.re_print(f"\n跟踪{rps_para['输入跟踪排名的代码']}排名动态完成!已保存至ConfigFiles目录")
 
-        #print(self.patlog.get_values()) # 返回控件中所有的内容
+        # print(self.patlog.get_values()) # 返回控件中所有的内容
 
-    def _ev_patten_save(self,event):
+    def _ev_patten_save(self, event):
         pass
+
+    def setFrameSize(self, displaySize):
+        self.contentWidth = displaySize[0]
+        self.contentHeight = displaySize[1]
+
+        # M1 与 M2 横向布局时宽度分割
+        self.leftWidth = int(self.contentWidth * 0.2)
+        self.rightWidth = int(self.contentWidth * 0.8)
+        # M1 纵向100%
+        self.leftHeight = self.contentHeight
+
+        # M1中S1 S2 S3 纵向布局高度分割
+        self.M1S1_length = int(self.leftHeight * 0.2)
+        self.M1S2_length = int(self.leftHeight * 0.2)
+        self.M1S3_length = int(self.leftHeight * 0.6)

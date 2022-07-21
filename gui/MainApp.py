@@ -7,10 +7,9 @@ import wx.adv
 import wx.grid
 import wx.html2
 
-from gui.BenchFrame import BenchFrame
+from gui.MainFrame import MainFrame
 from gui.QuantFrame import QuantFrame
 
-from gui.MainFrame import MainFrame
 from gui.ConfFrame import ConfFrame
 from gui.DataFrame import DataFrame
 
@@ -51,8 +50,8 @@ class GuiManager():
 
     def return_frame(self, type):
         if type == 0:  # 主界面
-            return BenchFrame(parent=None, id=type,
-                              displaySize=self.displaySize, switchFrame=self.fun_swframe)
+            return MainFrame(parent=None, id=type,
+                             displaySize=self.displaySize, switchFrame=self.fun_swframe)
         elif type == 1:  # 量化分析界面
             return QuantFrame(parent=None, id=type,
                               displaySize=self.displaySize, Fun_SwFrame=self.fun_swframe)

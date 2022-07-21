@@ -132,7 +132,6 @@ class QuantFrame(wx.Frame):
                           Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).
                           MinSize((self.leftWidth, self.leftHeight)).
                           Floatable(True).FloatingSize((self.leftWidth, self.leftHeight)).
-                          # Caption("wxPython").
                           CloseButton(False).
                           Name("LeftPanel"))
         self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
@@ -618,7 +617,7 @@ class QuantFrame(wx.Frame):
         self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self._ev_label_lclick_pkcode, self.grid_pick)
 
         self.df_use = pd.DataFrame()
-        self.filte_result = pd.DataFrame()
+        self.filter_result = pd.DataFrame()
         self.grid_pick.Hide()
 
     def _init_patten_log(self, parent):
@@ -755,39 +754,39 @@ class QuantFrame(wx.Frame):
                 para_values = str(self.pick_value_text.GetValue())
 
                 if self.pick_cond_cmbo.GetStringSelection() == u"等于":
-                    self.filte_result = pd.DataFrame()
+                    self.filter_result = pd.DataFrame()
                     for value in para_values.split("|"):  # 支持用"｜"符号查询多个
-                        self.filte_result = pd.concat([self.filte_result, self.df_use[self.df_use[val] == value]])
+                        self.filter_result = pd.concat([self.filter_result, self.df_use[self.df_use[val] == value]])
                 else:
                     MessageDialog("【%s】选项只支持【等于】条件判断！！！" % (val))
                     return
 
             if self.pick_cond_cmbo.GetStringSelection() == u"大于":
-                self.filte_result = self.df_use[self.df_use[val] > float(para_value)]
+                self.filter_result = self.df_use[self.df_use[val] > float(para_value)]
             elif self.pick_cond_cmbo.GetStringSelection() == u"小于":
-                self.filte_result = self.df_use[self.df_use[val] < float(para_value)]
+                self.filter_result = self.df_use[self.df_use[val] < float(para_value)]
             elif self.pick_cond_cmbo.GetStringSelection() == u"等于":
-                self.filte_result = self.df_use[self.df_use[val] == para_value]
+                self.filter_result = self.df_use[self.df_use[val] == para_value]
             else:
                 pass
 
             if self.sort_values_cmbo.GetStringSelection() == u"降序":
-                self.filte_result.sort_values(by=val, axis='index', ascending=False, inplace=True,
-                                              na_position='last')
+                self.filter_result.sort_values(by=val, axis='index', ascending=False, inplace=True,
+                                               na_position='last')
             elif self.sort_values_cmbo.GetStringSelection() == u"升序":
-                self.filte_result.sort_values(by=val, axis='index', ascending=True, inplace=True,
-                                              na_position='last')
+                self.filter_result.sort_values(by=val, axis='index', ascending=True, inplace=True,
+                                               na_position='last')
             else:
                 pass
 
-            if self.filte_result.empty != True:
+            if self.filter_result.empty != True:
 
-                ser_col = self.filte_result[val]  # 先单独保存
-                self.filte_result.drop(val, axis=1, inplace=True)  # 而后从原数据中删除
-                self.filte_result.insert(0, val, ser_col)  # 插入至首个位置
+                ser_col = self.filter_result[val]  # 先单独保存
+                self.filter_result.drop(val, axis=1, inplace=True)  # 而后从原数据中删除
+                self.filter_result.insert(0, val, ser_col)  # 插入至首个位置
 
-                self.df_use = self.filte_result
-                self.refresh_grid(self.filte_result, val)
+                self.df_use = self.filter_result
+                self.refresh_grid(self.filter_result, val)
             else:
                 MessageDialog("未找到符合条件的数据！！！")
 
