@@ -2,6 +2,7 @@ import os
 
 import wx
 import wx.lib.agw.aui as aui
+from wx.lib import inspection
 
 from gui.MainPanel import MainPanel
 from gui.panels.DataPanel import DataPanel
@@ -41,7 +42,6 @@ class MainFrame(wx.Frame):
 
         p_left = wx.Panel(self, -1)
         p_center0 = DataPanel(self, -1, displaySize=(1600, 900))
-        p_center0.SetSize((1600, 900))
         p_center1 = MainPanel(self, -1)
         p_bottom = wx.Panel(self, -1)
 
@@ -63,7 +63,7 @@ class MainFrame(wx.Frame):
                               1).Floatable(True)
                           )
         self._mgr.AddPane(self.tbv,
-                          aui.AuiPaneInfo().Name('ToolBarV').Caption('工具条').ToolbarPane().Right().Floatable(True)
+                          aui.AuiPaneInfo().Name('ToolBarV').Caption('工具条').ToolbarPane().Left().Floatable(True)
                           )
 
         self._mgr.AddPane(p_left,
@@ -71,7 +71,7 @@ class MainFrame(wx.Frame):
                               '操作区').MinimizeButton(True).MaximizeButton(True).CloseButton(True)
                           )
 
-        self._mgr.AddPane(p_center0, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True).Show())
+        self._mgr.AddPane(p_center0, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True).MinSize((800, -1)).Show())
 
         self._mgr.AddPane(p_center1,
                           aui.AuiPaneInfo().Name('CenterPanel1').CenterPane().Hide()
@@ -130,5 +130,6 @@ class MainFrame(wx.Frame):
 if __name__ == '__main__':
     app = wx.App()
     frame = MainFrame(None)
+    inspection.InspectionTool().Show()
     frame.Show()
     app.MainLoop()

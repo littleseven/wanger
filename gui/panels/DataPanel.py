@@ -240,13 +240,9 @@ class DataPanel(MainPanel):
 
         # 用于量化工具集成到整体系统中
         self.fun_swframe = Fun_SwFrame
-        # 用 aui 做整体布局
-        # self._mgr = aui.AuiManager()
         self.mainPanel = mainPanel = MainPanel(self)
-        # self._mgr.SetManagedWindow(self.mainPanel)
-
         self.leftPanel = leftPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
-        self.rightPanel = rightPanel = wx.Panel(mainPanel, -1)
+        self.rightPanel = rightPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
         ################################### 变量初始化 ###################################
 
@@ -292,8 +288,6 @@ class DataPanel(MainPanel):
         self.right_boxsizer.Add(self._init_patten_log(self.rightPanel), proportion=10, flag=wx.EXPAND | wx.BOTTOM,
                            border=2)  # proportion参数控制容器尺寸比例
         self.rightPanel.SetSizer(self.right_boxsizer)  # 形态选股 patten
-        # self.right_boxsizer.SetMinSize((800, 800))
-
         ################################### 第二层布局 ###################################
 
         self.left_boxsizer = wx.BoxSizer(wx.VERTICAL)  # 纵向box
@@ -304,12 +298,6 @@ class DataPanel(MainPanel):
         ################################### 辅助配置 ###################################
         # 创建形态选股日志
         self.patlog = PatLogIf(self.patten_log_tx)
-
-        # 创建菜单栏
-        # self._init_menu_bar()
-        # 创建状态栏
-        # self._init_status_bar()
-
         # self._mgr.AddPane(self.leftPanel,
         #                   aui.AuiPaneInfo().
         #                   Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).
@@ -319,9 +307,9 @@ class DataPanel(MainPanel):
         #                   Name("LeftPanel"))
         # self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
         self.mainPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.mainPanelSizer.SetMinSize(800, 800)
-        self.mainPanelSizer.Add(self.left_boxsizer, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
-        self.mainPanelSizer.Add(self.right_boxsizer, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
+        self.mainPanelSizer.SetMinSize(self.contentWidth, self.contentHeight)
+        self.mainPanelSizer.Add(self.leftPanel, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
+        self.mainPanelSizer.Add(self.rightPanel, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
         self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效
         self.mainPanel.Layout()
         self.mainPanelSizer.Layout()
@@ -443,7 +431,7 @@ class DataPanel(MainPanel):
 
         # 形态选股参数———形态类型选取
         self.patten_type_box = wx.StaticBox(sub_panel, -1, u'选股模型')
-        self.patten_type_sizer = wx.StaticBoxSizer(self.patten_type_box, wx.HORIZONTAL)
+        self.patten_type_sizer = wx.StaticBoxSizer(self.patten_type_box, wx.VERTICAL)
 
         self.patten_type_cmbo = wx.ComboBox(sub_panel, -1,
                                             choices=["不启用", "双底形态", "RPS-Top10", "跳空缺口-预留", "金叉死叉-预留", "线性回归-预留"],
@@ -453,7 +441,7 @@ class DataPanel(MainPanel):
 
         # 形态选股参数———股票池选取
         self.patten_pool_box = wx.StaticBox(sub_panel, -1, u'股票池选取')
-        self.patten_pool_sizer = wx.StaticBoxSizer(self.patten_pool_box, wx.HORIZONTAL)
+        self.patten_pool_sizer = wx.StaticBoxSizer(self.patten_pool_box, wx.VERTICAL)
 
         self.patten_pool_cmbo = wx.ComboBox(sub_panel, -1, choices=["全市场股票"],
                                             style=wx.CB_READONLY | wx.CB_DROPDOWN)  # 选股项
