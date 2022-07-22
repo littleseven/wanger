@@ -3,6 +3,9 @@ import os
 import wx
 import wx.lib.agw.aui as aui
 
+from gui.MainPanel import MainPanel
+from gui.panels.DataPanel import DataPanel
+
 
 class MainFrame(wx.Frame):
     """从wx.Frame派生主窗口类"""
@@ -37,14 +40,15 @@ class MainFrame(wx.Frame):
         self.tbv = self._create_toolbar('V')
 
         p_left = wx.Panel(self, -1)
-        p_center0 = wx.Panel(self, -1)
-        p_center1 = wx.Panel(self, -1)
+        p_center0 = DataPanel(self, -1, displaySize=(1600, 900))
+        p_center0.SetSize((1600, 900))
+        p_center1 = MainPanel(self, -1)
         p_bottom = wx.Panel(self, -1)
 
         btn = wx.Button(p_left, -1, '切换', pos=(30, 200), size=(100, -1))
         btn.Bind(wx.EVT_BUTTON, self.on_switch)
 
-        text0 = wx.StaticText(p_center0, -1, '我是第1页', pos=(40, 100), size=(200, -1), style=wx.ALIGN_LEFT)
+        # text0 = wx.StaticText(p_center0, -1, '我是第1页', pos=(40, 100), size=(200, -1), style=wx.ALIGN_LEFT)
         text1 = wx.StaticText(p_center1, -1, '我是第2页', pos=(40, 100), size=(200, -1), style=wx.ALIGN_LEFT)
 
         self._mgr = aui.AuiManager()
@@ -67,9 +71,7 @@ class MainFrame(wx.Frame):
                               '操作区').MinimizeButton(True).MaximizeButton(True).CloseButton(True)
                           )
 
-        self._mgr.AddPane(p_center0,
-                          aui.AuiPaneInfo().Name('CenterPanel0').CenterPane().Show()
-                          )
+        self._mgr.AddPane(p_center0, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True).Show())
 
         self._mgr.AddPane(p_center1,
                           aui.AuiPaneInfo().Name('CenterPanel1').CenterPane().Hide()
