@@ -9,9 +9,11 @@ import wx.html2
 import wx.lib.agw.aui as aui
 import os
 
+from gui import constants
+
 
 class MainFrame(wx.Frame):
-    rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
+    rel_path = constants.CONFIG_PATH
 
     def __init__(self, parent=None, id=-1, displaySize=(1550, 900), switchFrame=None):
         displaySize = 0.05 * displaySize[0], 0.5 * displaySize[1]

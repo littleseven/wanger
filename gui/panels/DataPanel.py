@@ -14,13 +14,10 @@ import wx.grid
 
 from datetime import datetime
 
-from wx.lib.agw import aui
-
-import gui
 from datautil.Tushare import basic_code_list
 from datautil.CsvData import CsvBackend
 from datautil.HistoryOCHLV import download_stock_hist_from_netease
-from gui.MainPanel import MainPanel
+from gui.panels.MainPanel import MainPanel
 from gui.wigets.DefDialog import MessageDialog, ViewGripDiag, ProgressDialog, DouBottomDialog, RpsTop10Dialog
 from strategy.PattenGath import Base_Patten_Group
 from strategy.IndicateGath import Base_Indicate_Group
@@ -232,15 +229,14 @@ class CollegeTreeListCtrl(wx.gizmos.TreeListCtrl):
 
 class DataPanel(MainPanel):
 
-    def __init__(self, parent=None, id=-1, displaySize=(1600, 900), Fun_SwFrame=None):
+    def __init__(self, parent=None, id=-1, displaySize=(1024, 800)):
         wx.Panel.__init__(self, parent, name=u"股票历史数据下载工具", size=displaySize)
         self.down_stock_list = init_down_path(data_path)  # global
         self.setFrameSize(displaySize)
-        self.SetMinSize((640, 480))
+        # self.SetMinSize((640, 480))
 
         # 用于量化工具集成到整体系统中
-        self.fun_swframe = Fun_SwFrame
-        self.mainPanel = mainPanel = MainPanel(self)
+        self.mainPanel = mainPanel = self
         self.leftPanel = leftPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
         self.rightPanel = rightPanel = wx.Panel(mainPanel, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
 
@@ -307,7 +303,7 @@ class DataPanel(MainPanel):
         #                   Name("LeftPanel"))
         # self._mgr.AddPane(self.rightPanel, aui.AuiPaneInfo().CenterPane().Name("RightPanel").Resizable(True))
         self.mainPanelSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.mainPanelSizer.SetMinSize(self.contentWidth, self.contentHeight)
+        self.mainPanelSizer.SetMinSize(self.rightWidth, self.contentHeight)
         self.mainPanelSizer.Add(self.leftPanel, proportion=1, border=2, flag=wx.EXPAND | wx.ALL)
         self.mainPanelSizer.Add(self.rightPanel, proportion=10, border=2, flag=wx.EXPAND | wx.ALL)
         self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效

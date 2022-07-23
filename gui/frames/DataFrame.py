@@ -19,7 +19,7 @@ from wx.lib.agw import aui
 from datautil.Tushare import basic_code_list
 from datautil.CsvData import CsvBackend
 from datautil.HistoryOCHLV import download_stock_hist_from_netease
-from gui.MainPanel import MainPanel
+from gui.panels.MainPanel import MainPanel
 from gui.wigets.DefDialog import MessageDialog, ViewGripDiag, ProgressDialog, DouBottomDialog, RpsTop10Dialog
 from strategy.PattenGath import Base_Patten_Group
 from strategy.IndicateGath import Base_Indicate_Group
@@ -31,7 +31,7 @@ q_codes = queue.Queue(5000)
 q_results = queue.Queue(5000)
 
 # 创建本地存储路径
-data_path = os.path.dirname(os.path.dirname(__file__)) + '/datafiles/stock_history/'
+data_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/datafiles/stock_history/'
 
 
 def init_down_path(data_path):

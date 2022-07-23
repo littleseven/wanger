@@ -1,17 +1,18 @@
 #! /usr/bin/env python 
 # -*- encoding: utf-8 -*-
 # author 王二
+import os
 
 import wx
 import wx.adv
 import wx.grid
 import wx.html2
 
-from gui.MainFrame import MainFrame
-from gui.QuantFrame import QuantFrame
+from gui.frames.MainFrame import MainFrame
+from gui.frames.QuantFrame import QuantFrame
 
-from gui.ConfFrame import ConfFrame
-from gui.DataFrame import DataFrame
+from gui.frames.ConfFrame import ConfFrame
+from gui.frames.DataFrame import DataFrame
 
 USE_WIT = True
 
@@ -19,6 +20,10 @@ AppBaseClass = wx.App
 if USE_WIT:
     from wx.lib.mixins.inspection import InspectableApp
     AppBaseClass = InspectableApp
+
+root_path = os.path.dirname(os.path.dirname(__file__))
+config_path = root_path + '/config/'
+data_path = root_path + '/datafiles/'
 
 class GuiManager():
     def __init__(self, Fun_SwFrame):

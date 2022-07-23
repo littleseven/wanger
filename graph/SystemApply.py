@@ -5,11 +5,12 @@
 import sys, os
 from graph.MarketGraph import MarketGraphIf
 from graph.BacktestingGraph import BacktestingGraphIf
+from gui import constants
 
 
 class Sys_MultiGraph(MarketGraphIf, BacktestingGraphIf):
 
-    rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
+    rel_path = constants.CONFIG_PATH
 
     # 通读<8.1 定制可视化接口> -- 代码具体出现于<9.1.6 回测界面的自定义设计>
     def back_graph_run(self, stock_data, **kwargs):

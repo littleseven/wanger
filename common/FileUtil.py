@@ -6,9 +6,11 @@ import json
 import pandas as pd
 import os
 
+from gui import constants
+
 
 class FileUtil:
-    rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
+    rel_path = constants.CONFIG_PATH
 
     @staticmethod
     def load_sys_para(filename):

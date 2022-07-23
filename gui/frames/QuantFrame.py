@@ -7,17 +7,16 @@ import wx.adv
 import wx.grid
 import wx.html2
 import os
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 import time
 import webbrowser
-from importlib import reload
 
 from wx.lib.agw import aui
 
-from gui.MainPanel import MainPanel
+from gui import constants
+from gui.panels.MainPanel import MainPanel
 from gui.wigets.SysPanel import Sys_Panel
 from gui.wigets.MpfGraphs import MpfGraphs
 from gui.wigets.WebGraphs import WebGraphs
@@ -29,7 +28,7 @@ from gui.wigets.DefDialog import UserDialog, MessageDialog, ImportFileDiag, Grou
     ProgressDialog, ChoiceDialog, BrowserF10, WebDialog, DouBottomDialog
 from gui.wigets.DefAnimation import AnimationDialog
 
-from datautil.Tushare import Tspro_Backend, Tsorg_Backend
+from datautil.Tushare import Tspro_Backend
 from datautil.FromSql import readFundDatFromSql
 from datautil.CrawerDaily import CrawerDailyBackend
 from datautil.CrawerNorth import CrawerNorthBackend
@@ -53,7 +52,7 @@ plt.rcParams['figure.dpi'] = 50
 
 
 class QuantFrame(wx.Frame):
-    rel_path = os.path.dirname(os.path.dirname(__file__)) + '/config/'
+    rel_path = constants.CONFIG_PATH
     contentWidth = 0
     contentHeight = 0
 
