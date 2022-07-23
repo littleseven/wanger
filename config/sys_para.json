@@ -2,6 +2,8 @@
     "__version__": "V0.2.11",
     "__author__": "王二",
     "operate_sys": "macos",
+    "data_src": "新浪爬虫",
+    "data_store": "Sqlite",
     "multi-panels": {
         "mpl_fig_x": 8,
         "mpl_fig_y": 6.4,

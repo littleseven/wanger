@@ -42,7 +42,8 @@ class ConfigPanel(MainPanel):
         sel_operate_text.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL, wx.NORMAL))
 
         # 界面尺寸大小提示
-        disp_size_text = wx.StaticText(self.SysPanel, -1, u'显示器屏幕尺寸：\n长:{};宽:{}'.format(displaySize[0], displaySize[1]))
+        realSize = wx.DisplaySize()
+        disp_size_text = wx.StaticText(self.SysPanel, -1, u'显示器屏幕尺寸：\n长:{};宽:{}'.format(realSize[0], realSize[1]))
         disp_size_text.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL, wx.NORMAL))
 
         sys_input_sizer.Add(sel_operate_text, proportion=0, flag=wx.EXPAND | wx.ALL, border=2)
@@ -53,6 +54,7 @@ class ConfigPanel(MainPanel):
         data_store_list = [u"本地csv", u"Sqlite"]
         self.data_store_box = wx.RadioBox(self.SysPanel, -1, label=u'数据存储', choices=data_store_list, majorDimension=2,
                                          style=wx.RA_SPECIFY_COLS)
+        self.data_store_box.SetStringSelection(self.sys_para["data_store"])
         # 初始化存储变量
         self.data_store_val = self.data_store_box.GetStringSelection()
 
@@ -60,6 +62,7 @@ class ConfigPanel(MainPanel):
         data_src_list = [u"新浪爬虫", u"baostock", u"tushare", u"离线csv"]
         self.data_src_box = wx.RadioBox(self.SysPanel, -1, label=u'数据源', choices=data_src_list,
                                               majorDimension=2, style=wx.RA_SPECIFY_ROWS)
+        self.data_src_box.SetStringSelection(self.sys_para["data_src"])
         # 初始化指标变量
         self.data_src_Val = self.data_src_box.GetStringSelection()
 
@@ -142,10 +145,12 @@ class ConfigPanel(MainPanel):
         self.SetSizer(self.HBoxPanel)
 
     def _ev_save_para(self, event):
-
         self.sys_para["operate_sys"] = self.sel_operate_cmbo.GetStringSelection()
+        self.sys_para["data_src"] = self.data_src_box.GetStringSelection()
+        self.sys_para["data_store"] = self.data_store_box.GetStringSelection()
+
         FileUtil.save_sys_para("sys_para.json", self.sys_para)
-        MessageDialog("存储完成！点击界面顶部的菜单栏->主菜单->返回")
+        MessageDialog("保存完成，重起生效！")
 
     def _ev_enter_stcode(self, event):
 

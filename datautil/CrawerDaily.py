@@ -16,10 +16,13 @@ from pathlib import Path
 from datautil.Tushare import basic_code_list
 
 # 爬虫取东方财富网沪深A股股票每日实时行情数据
+from gui import constants
+
+
 class CrawerDailyData():
 
     pages = 11 # 目前A股的股票数量需要11页
-    store_path = os.path.dirname(os.path.dirname(__file__)) + '/datafiles/DailyData/'
+    store_path = constants.DATA_PATH + 'DailyData/'
 
     def __init__(self):
 
