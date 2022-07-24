@@ -12,16 +12,18 @@ import pandas as pd
 from datetime import datetime
 
 # 参数设置
+from gui import constants
+
 pd.set_option('display.expand_frame_repr', False)  # False不允许换行
 pd.set_option('display.max_rows', 20)  # 显示的最大行数
 pd.set_option('display.max_columns', 18)  # 显示的最大列数
 # pd.set_option('precision', 2) # 显示小数点后的位数
 
+
 # 从数据库中获取基金持仓数据
 def readFundDatFromSql(syslog):
     # 创建数据库存储路径
-    store_path = os.path.dirname(os.path.dirname(__file__)) + \
-                 "/datafiles/FundData/"
+    store_path = constants.DATA_PATH + "/FundData/"
 
     quarters = {"1": "3/31", "2": "6/30", "3": "9/30", "4": "12/31"}
 

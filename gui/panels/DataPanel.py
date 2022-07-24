@@ -21,9 +21,9 @@ from gui.panels.MainPanel import MainPanel
 from gui.wigets.DefDialog import MessageDialog, ViewGripDiag, ProgressDialog, DouBottomDialog, RpsTop10Dialog
 from strategy.PattenGath import Base_Patten_Group
 from strategy.IndicateGath import Base_Indicate_Group
-from common.LogUtil import PatLogIf
+from common.LogUtil import BizLog
 from common.FileUtil import FileUtil
-from common.RemoteInfo import auto_send_email
+from common.MailUtil import auto_send_email
 
 q_codes = queue.Queue(5000)
 q_results = queue.Queue(5000)
@@ -293,7 +293,7 @@ class DataPanel(MainPanel):
         self.leftPanel.SetSizer(self.left_boxsizer)  # 形态选股 patten
         ################################### 辅助配置 ###################################
         # 创建形态选股日志
-        self.patlog = PatLogIf(self.patten_log_tx)
+        self.patlog = BizLog(self.patten_log_tx)
         # self._mgr.AddPane(self.leftPanel,
         #                   aui.AuiPaneInfo().
         #                   Left().Layer(2).BestSize((self.leftWidth, self.leftHeight)).

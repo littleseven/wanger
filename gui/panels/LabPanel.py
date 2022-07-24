@@ -25,7 +25,7 @@ from gui.wigets.DefDialog import UserDialog, MessageDialog, ImportFileDiag, Grou
 from gui.wigets.DefAnimation import AnimationDialog
 
 from datautil.Tushare import Tspro_Backend
-from datautil.FromSql import readFundDatFromSql
+from datautil.FundData import readFundDatFromSql
 from datautil.CrawerDaily import CrawerDailyBackend
 from datautil.CrawerNorth import CrawerNorthBackend
 from datautil.EastmUpLimit import UpLimitBackend
@@ -39,8 +39,8 @@ from strategy.PattenGath import Base_Patten_Group
 from common.FileUtil import FileUtil
 from common.CodeTableUtil import CodeTableUtil
 from common.CodePoolUtil import CodePoolUtil
-from common.LogUtil import SysLogIf, PatLogIf
-from common.RemoteInfo import auto_send_email
+from common.LogUtil import SysLog, BizLog
+from common.MailUtil import auto_send_email
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -122,8 +122,8 @@ class LabPanel(MainPanel):
         self.mainPanel.SetSizerAndFit(self.mainPanelSizer)  # 使布局有效
         self.mainPanelSizer.Layout()
         ################################### 辅助配置 ###################################
-        self.syslog = SysLogIf(self.sys_log_tx)
-        self.patlog = PatLogIf(self.patten_log_text)
+        self.syslog = SysLog(self.sys_log_tx)
+        self.patlog = BizLog(self.patten_log_text)
 
         # self.timer = wx.Timer(self)  # 创建定时器
         # self.Bind(wx.EVT_TIMER, self.ev_int_timer, self.timer)  # 绑定一个定时器事件
