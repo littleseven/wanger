@@ -92,9 +92,9 @@ class QuantFrame(wx.Frame):
         # 添加参数布局
         self.vbox_sizer_left = wx.BoxSizer(wx.VERTICAL)  # 纵向box
         # self.vbox_sizer_left.Add(self._init_treelist_ctrl(), proportion=3, flag=wx.EXPAND | wx.BOTTOM, border=5)
-        self.vbox_sizer_left.Add(self._init_text_log(leftPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=5)
-        self.vbox_sizer_left.Add(self._init_listbox_mult(leftPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=5)
         self.vbox_sizer_left.Add(self._init_nav_notebook(leftPanel), proportion=2, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        self.vbox_sizer_left.Add(self._init_listbox_mult(leftPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        self.vbox_sizer_left.Add(self._init_text_log(leftPanel), proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=5)
         # self.vbox_sizer_left.Add(self._init_grid_pl(), proportion=5, flag=wx.EXPAND | wx.BOTTOM, border=5)
         self.vbox_sizer_left.Fit(self)
         leftPanel.SetSizer(self.vbox_sizer_left)
