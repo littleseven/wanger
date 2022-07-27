@@ -13,7 +13,7 @@ CREATE TABLE `hk_stocks_d` (
   `sector` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '板块',
   `sp_sector` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '标普板块',
   `industry` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '行业',
-  `total_cap` decimal(10,3) DEFAULT NULL COMMENT '总市值',
+  `total_cap` decimal(20,3) DEFAULT NULL COMMENT '总市值',
   `is_ss` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '是否上证成分股',
   `is_sz` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '是否深证成分股',
   `is_hs` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '是否恒生综合成分股',
@@ -22,9 +22,12 @@ CREATE TABLE `hk_stocks_d` (
   `high` decimal(20,3) DEFAULT NULL COMMENT '最高价',
   `low` decimal(20,3) DEFAULT NULL COMMENT '最低价',
   `close` decimal(20,3) DEFAULT NULL COMMENT '收盘价',
-  `pre_close` decimal(20,3) DEFAULT NULL COMMENT '前一天收盘价',
-  `vol` bigint DEFAULT NULL COMMENT '成交量',
-  `amount` bigint DEFAULT NULL COMMENT '成交额',
+  `last_close` decimal(20,3) DEFAULT NULL COMMENT '前一天收盘价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `turnover` bigint DEFAULT NULL COMMENT '成交额',
+  `pe_ratio` decimal(10,3) DEFAULT NULL COMMENT '市盈率',
+  `turnover_rate` decimal(10,3) DEFAULT NULL COMMENT '换手率',
+  `change_rate` decimal(10,3) DEFAULT NULL COMMENT '涨跌幅',
   PRIMARY KEY (`date`,`code`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
