@@ -13,13 +13,13 @@ from tools.util import date
 path = os.path.dirname(__file__) + os.sep + '..' + os.sep
 sys.path.append(path)
 
-from tools.util import *
-from tools.database import *
+# from tools.util import *
+# from tools.database import *
 
 
 def get_daily():
     list_sql = '''
-                select * from cn_stocks_info;
+                select * from hsc_stocks_info;
                '''
 
     start = datetime.now()
@@ -27,7 +27,7 @@ def get_daily():
     stk_codes = stk_info.code.copy()
     stk_info = stk_info.set_index(['code'])
 
-    table = 'cn_stocks_d'
+    table = 'hsc_stocks_d'
     db.truncate_table(table)
 
     columns = ['code', 'date', 'name', 'sector', 'sp_sector', 'industry', 'total_cap',
