@@ -13,7 +13,7 @@ def read_data(table, columns):
 
 
 def read_data_from_sql(sql):
-    db.read_data_from_sql(sql=sql)
+    return db.read_data_from_sql(sql=sql)
 
 
 def truncate_table(table):
