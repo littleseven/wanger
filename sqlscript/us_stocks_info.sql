@@ -13,7 +13,7 @@ CREATE TABLE `us_stocks_info` (
   `sp_sector` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '标普板块',
   `industry` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '行业',
   `country` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '国家',
-  `total_cap` decimal(10,3) DEFAULT NULL COMMENT '总市值',
+  `total_cap` decimal(20,3) DEFAULT NULL COMMENT '总市值',
   `is_ss` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '是否SS成分股',
   `is_sz` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '是否SZ分股',
   `is_hs` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '是否恒生成分股',
