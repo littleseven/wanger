@@ -32,40 +32,54 @@ def get_daily():
     table = 'hsc_stocks_d'
     db.truncate_table(table)
 
+    date_start = date.get_3year_ago()
+    date_end = date.get_end_day()
 
     # 获取日K线数据
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     for code in stk_codes:
-        time.sleep(2)
-        futu_code = converter.yfinance_code_to_futu_code(code)
-        print(futu_code)
-        ret, data, page_req_key = quote_ctx.request_history_kline(futu_code,
-                                                                  start=date.get_9month_ago(),
-                                                                  end=date.get_end_day(),
-                                                                  max_count=200)  # 每页5个，请求第一页
-        if ret == RET_OK:
-            # print(data)
-            # print(data['code'][0])  # 取第一条的股票代码
-            # print(data['close'].values.tolist())  # 第一页收盘价转为 list
-            handle_data(table, code, stk_info, data)
-        else:
-            print('error:', code, data)
-        while page_req_key is not None:  # 请求后面的所有结果
-            print('*************************************')
-            ret, data, page_req_key = quote_ctx.request_history_kline(futu_code,
-                                                                      start=date.get_9month_ago(),
-                                                                      end=date.get_end_day(),
-                                                                      max_count=200,
-                                                                      page_req_key=page_req_key)  # 请求翻页后的数据
-            if ret == RET_OK:
-                # print(data)
-                handle_data(table, code, stk_info, data)
-            else:
-                print('error:', code, data)
-        print('All pages are finished!')
+        download_data(quote_ctx, table, code, stk_info, date_start, date_end)
+        time.sleep(2.5)
     quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽
     end = datetime.now()
     print('Download Data use {}'.format(end - start))
+
+
+result = None
+
+
+def download_data(quote_ctx, table, code, stk_info, start, end):
+    global result
+    result = None
+    futu_code = converter.yf_to_ft(code)
+    print(futu_code)
+    ret, data, page_req_key = quote_ctx.request_history_kline(futu_code,
+                                                              start=start,
+                                                              end=end,
+                                                              max_count=128)  # 每页5个，请求第一页
+    if ret == RET_OK:
+        result = handle_data(table, code, stk_info, data)
+    else:
+        print('error:', code, data)
+    while page_req_key is not None:  # 请求后面的所有结果
+        ret, data, page_req_key = quote_ctx.request_history_kline(futu_code,
+                                                                  start=start,
+                                                                  end=end,
+                                                                  max_count=128,
+                                                                  page_req_key=page_req_key)  # 请求翻页后的数据
+        if ret == RET_OK:
+            # print(data)
+            result = pd.concat([result, handle_data(table, code, stk_info, data)], ignore_index=True)
+        else:
+            print('error:', code, data)
+    columns = ['code', 'date', 'name', 'sector', 'sp_sector', 'industry', 'total_cap',
+               'is_ss', 'is_sz', 'is_hs', 'is_spx', 'open', 'high', 'low', 'close', 'volume',
+               'turnover', 'pe_ratio', 'turnover_rate', 'change_rate'
+               ]
+    if result is not None:
+        db.upsert_table(table, columns, result)
+    print('download ' + code + ' data finish')
+    return result
 
 
 def handle_data(table, code, stk_info, data):
@@ -87,7 +101,9 @@ def handle_data(table, code, stk_info, data):
 
     data.rename(columns={'time_key': 'date'}, inplace=True)
     data = data[columns]
-    db.upsert_table(table, columns, data)
+    # db.upsert_table(table, columns, data)
+    return data
+
 
 if __name__ == '__main__':
     get_daily()
